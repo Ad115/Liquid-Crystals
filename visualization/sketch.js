@@ -44,7 +44,7 @@ function fillBody3D(color_) {
 }
 
 function bodySize2D(i) {
-    return 2*600/box_length;
+    return 1.2*600/box_length;
 }
 
 function bodySize3D(i) {
