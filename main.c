@@ -66,7 +66,7 @@ int wait_server() {
 
 int init_server(double box_length, int dimensions) {
     wait_server();
-    printf("{"
+    printf("{" // Send parameters in JSON
            " \"box_length\" : %lf,"
            " \"dimensions\" : %d"
            "}\n", box_length, dimensions);
