@@ -1,6 +1,9 @@
 Liquid cristals simulation
 ==========================
 
+This molecular dynamics simulation is based on the code and the description in: http://www.pages.drexel.edu/~cfa22/msim/node27.html
+
+
 Usage
 -----
 
