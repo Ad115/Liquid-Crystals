@@ -1,4 +1,4 @@
-DIMENSIONS = 2 ## 2D or 3D?
+DIMENSIONS = 3 ## 2D or 3D?
 
 CC=gcc
 LDLIBS = -lm -g -Ofast -D DIMENSIONS=$(DIMENSIONS)#-pg

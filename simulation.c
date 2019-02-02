@@ -100,15 +100,20 @@ void init_random_velocities(ParticleSystem *psystem,
 // ---
 
 // ---
-double minimum_image(double diff, double box_length) { /*
+double minimum_image(double r1, double r2, double box_length) { /*
     * Get the distance to the minimum image.
     */
     double half_length = box_length/2;
+    double dr = r1 - r2;
 
-    diff -= (diff > half_length) * box_length;
-    diff += (diff < -half_length) * box_length;
+    if (dr <= -half_length) {
+        return (r1 + box_length-r2);
 
-    return diff;
+    } else if (dr <= half_length) {
+        return dr;
+
+    } else
+        return -(r2 + box_length-r1);
 }
 
 typedef struct Distance {
@@ -125,7 +130,7 @@ Distance particle_distance(Particle *p1, Particle *p2, double box_length) { /*
 
     Distance distance = {.distance_squared=0};
     for (int D=0; D<DIMENSIONS; D++) {
-        double dx = minimum_image(r2[D] - r1[D], box_length);
+        double dx = minimum_image(r1[D], r2[D], box_length);
         distance.diff_vector[D] = dx;
         distance.distance_squared += dx*dx;
     }

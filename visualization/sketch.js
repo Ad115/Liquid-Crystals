@@ -32,7 +32,7 @@ function fillShadow2D(color_) {
 }
 
 function fillShadow3D(color_) {
-    fill(color_, 50 - color_);
+    fill(color_, (100 - color_)/2);
 }
 
 function fillBody2D(color_) {
@@ -43,16 +43,34 @@ function fillBody3D(color_) {
     fill(color_, 255 - color_);
 }
 
+function bodySize2D(i) {
+    return 2*600/box_length;
+}
+
+function bodySize3D(i) {
+    let z = positions[i][2];
+    let size = bodySize2D(i);
+
+    if (z/box_length < 1/2) {
+        return size* (1 - 0.8*z/box_length);
+    } else {
+        return size* (1 + 0.8*(box_length-z)/box_length);
+    }
+    
+}
+
 function initialize(dimensions, _box_length) {
     let is3D = (dimensions == 3);
     if (is3D) {
         fetchColor = fetchColor3D;
         fillShadow = fillShadow3D;
         fillBody = fillBody3D;
+        bodySize = bodySize3D;
     } else {
         fetchColor = fetchColor2D;
         fillShadow = fillShadow2D;
         fillBody = fillBody2D;
+        bodySize = bodySize2D;
     }
 
     box_length = _box_length;
@@ -82,13 +100,13 @@ ws.onmessage = function (event) {
 
 function setup() {
     createCanvas(L, L);
-    background(200);
+    background(100);
     fill(100);
     noStroke();
 }
 
 function draw() {      //  < --- MAIN DRAWING LOOP
-    background(200);
+    background(230);
     if (ws.readyState) {
         screenPositions = positions.map(toScreenPos);
         n = screenPositions.length;
@@ -99,7 +117,7 @@ function draw() {      //  < --- MAIN DRAWING LOOP
             var screenPos = screenPositions[i];
 
             fillShadow(c);
-            ellipse(screenPos[0], screenPos[1], 4*600/box_length, 4*600/box_length);
+            ellipse(screenPos[0], screenPos[1], 1.5*bodySize(i), 1.5*bodySize(i));
         }
 
         // Particle
@@ -109,7 +127,7 @@ function draw() {      //  < --- MAIN DRAWING LOOP
             var screenPos = screenPositions[i];
 
             fillBody(c);
-            ellipse(screenPos[0], screenPos[1], 2*600/box_length, 2*600/box_length);
+            ellipse(screenPos[0], screenPos[1], bodySize(i), bodySize(i));
         }
         
         ws.send(1);
