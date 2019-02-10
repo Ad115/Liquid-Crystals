@@ -47,11 +47,23 @@ class ParticleSystem {
                     const ParticleSystem<T>& sys
         );
 
+        void write_xyz(void);
 };
 
 /*  
     Part II: IMPLEMENTATION
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+template <typename Particle_class>
+void ParticleSystem<Particle_class>::write_xyz() {
+    std::cout << this->n << "\n";
+    for (auto p: particles) {
+        std::cout << "\n";
+        for (int D=0; D<dimensions; D++)
+            std::cout << p.position[D] << " ";
+    }
+    return;
+}
 
 template< typename Particle_class >
 std::ostream& operator<<(std::ostream& stream, 

@@ -73,13 +73,16 @@ int main()
     }*/
     init_random();
 
-    ParticleSystem<Particle> miSistemaParticula( 10, 2, 1 );
-    miSistemaParticula.map_to_particles(init_random_velocities(2));
-    miSistemaParticula.map_to_particles(init_simple_positions(2, 10, 10));
+    int n= 20;
 
-    std::cout << "Sistema = " << miSistemaParticula << std::endl;
-    std::cout << "Temperatura: "
-              << miSistemaParticula.measure<double>(measure_temperature)
-              << std::endl;
+    ParticleSystem<Particle> miSistemaParticula( n, 3, 1 );
+    miSistemaParticula.map_to_particles(init_random_velocities(3));
+    miSistemaParticula.map_to_particles(init_simple_positions(3, 10, n));
+
+    //std::cout << "{\"system\": " << miSistemaParticula;
+    //std::cout << ", \"temperature\": "
+    //          << miSistemaParticula.measure<double>(measure_temperature)
+    //          << "}" << std::endl;
+    miSistemaParticula.write_xyz();
 
 }
