@@ -1,5 +1,6 @@
 let L = 600; // Screen box dimensions in pixels
 let initialization_done = false;
+var is3D;
 
 var positions = [];
 var screenPositions = [];
@@ -60,7 +61,7 @@ function bodySize3D(i) {
 }
 
 function initialize(dimensions, _box_length) {
-    let is3D = (dimensions == 3);
+    is3D = (dimensions == 3);
     if (is3D) {
         fetchColor = fetchColor3D;
         fillShadow = fillShadow3D;
@@ -108,8 +109,10 @@ function setup() {
 function draw() {      //  < --- MAIN DRAWING LOOP
     background(230);
     if (ws.readyState) {
+	if (is3D) 
+            positions.sort((a,b) => b[2]-a[2]);
         screenPositions = positions.map(toScreenPos);
-        n = screenPositions.length;
+	let n = screenPositions.length;
         
         // Particle shadow
         for (i=0; i<n; i++) {
