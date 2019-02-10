@@ -6,14 +6,18 @@
 class Container {
     private:
         unsigned int _dimensions;
+        double _side_length;
         std::vector<double> sides;
 
     public:
         Container( unsigned int dimensions, double side_length )
-            : _dimensions(dimensions), sides(dimensions, side_length) {}
+            : _dimensions(dimensions),
+              sides(dimensions, side_length),
+              _side_length(side_length){
+              }
 
         unsigned int dimensions() { return _dimensions; }
-
+        double side_length() { return _side_length; }
         friend std::ostream& operator<<(std::ostream& s, const Container& box);
 
 };

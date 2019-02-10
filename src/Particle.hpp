@@ -28,6 +28,7 @@ class Particle {
             return 1/2. * (v*v);
         };
 
+        
         friend std::ostream& operator<<(std::ostream& s, const Particle& p);
                         
 

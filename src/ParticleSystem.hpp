@@ -8,6 +8,7 @@
 #include "Vector.hpp"
 #include "Container.hpp"
 
+
 /*  
     Part I: DECLARATIONS
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -30,13 +31,16 @@ class ParticleSystem {
                 int nParticles, //1: Number of particles to create
                 int dimensions, //2: Number Dimensions to work [MAX=3]   
                 double numeric_density //3: Initial numeric density (particles/volume)
-                //positions_init_fn init_positions,
-                //velocities_init_fn init_velocities
         );
         ~ParticleSystem() = default;
-        
+        double minimum_image( double r1, double r2, double box_length );
+
+        template < class ParticleClass >
+        double distance( ParticleClass other_particle );
+
         template< typename ParticleFunction >
         void map_to_particles(ParticleFunction particle_fn);
+    
 
         template< typename Value, typename ParticleFunction >
         Value measure(ParticleFunction measure_fn);
@@ -47,8 +51,60 @@ class ParticleSystem {
                     const ParticleSystem<T>& sys
         );
 
+        double getBoxLength(){ return this->system_container->side_length(); };
         void write_xyz(void);
 };
+
+
+
+class init_random_velocities { /*
+    * Functor to initialize random velocities.
+    */
+    unsigned int dimensions;
+
+    public:
+        init_random_velocities(unsigned int dimensions) 
+            : dimensions(dimensions) {}
+        template < class ParticleClass >
+        void operator()(ParticleClass& p) {
+            p.velocity =  Vector::random_unit(dimensions);
+        }
+};
+
+class init_simple_positions { /*
+    * Functor to initialize random velocities.
+    */
+    unsigned int dimensions;
+    double L;
+    int cube_length;
+    int n;
+    int particle_idx;
+
+    public:
+        init_simple_positions(unsigned int dimensions, double L, int n) 
+            : dimensions(dimensions), 
+              L(L), n(n),
+
+              // The lowest integer such that cube_length^DIMENSIONS >= n. Think of a 
+              // cube in DIMENSIONS with side cube_length where all particles are evenly 
+              // spaced on a simple grid.
+              cube_length(ceil(pow(n, 1./dimensions))) // No. of particles along every side
+                                                       // of the cube
+              {}
+        template < class ParticleClass >
+        void operator()(ParticleClass& p) {
+            Vector position(dimensions);
+            for (int D=0; D<dimensions; D++) {
+                // Get position in a hypercube with volume = cube_length^DIMENSIONS.
+                position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
+                // Rescale to a box of volume = L^DIMENSIONS
+                position[D] *= (L/cube_length)*0.75;
+            }
+            p.position =  position;
+            particle_idx++;
+        }
+};
+
 
 /*  
     Part II: IMPLEMENTATION
@@ -63,7 +119,7 @@ void ParticleSystem<Particle_class>::write_xyz() {
             std::cout << p.position[D] << " ";
     }
     return;
-}
+};
 
 template< typename Particle_class >
 std::ostream& operator<<(std::ostream& stream, 
@@ -83,9 +139,9 @@ std::ostream& operator<<(std::ostream& stream,
     stream << "}";
 
     return stream;
-}
+};
 
-template <typename Particle_class>
+template < typename Particle_class >
 ParticleSystem<Particle_class>::ParticleSystem( 
                 int nParticles, //1: Number of particles to create
                 int dimensions, //2: Number Dimensions to work [MAX=3]   
@@ -97,7 +153,10 @@ ParticleSystem<Particle_class>::ParticleSystem(
       dimensions(dimensions), 
       particles(n, Particle_class(dimensions)),
       system_container( dimensions, pow(n/numeric_density, 1/3.) ) {
-}
+    //Start the particle setup
+    map_to_particles( init_random_velocities( dimensions ) );
+    map_to_particles( init_simple_positions( dimensions, system_container.side_length(), n ));
+};
 
 
 template< typename Particle_class >
@@ -131,7 +190,40 @@ Value ParticleSystem<Particle_class>::measure(
     Value sum(0);
     return std::accumulate(std::begin(measurements), std::end(measurements),
                            Value(0));
+};
+
+double minimum_image(double r1, double r2, double box_length) { /*
+    * Get the distance to the minimum image.
+    */
+    double half_length = box_length/2;
+    double dr = r1 - r2;
+
+    if (dr <= -half_length) {
+        return (r1 + box_length-r2);
+
+    } else if (dr <= half_length) {
+        return dr;
+
+    } else
+        return -(r2 + box_length-r1);
 }
+
+/*
+template < class ParticleClass >
+std::vector<double> distance( ParticleClass this_particle, ParticleClass other_particle ) { 
+    * Calculate the distance using periodic boundaries.
+    
+    //std::vector<double> dim_distance(this_particle->dimensions);
+    Distance distance = {.distance_squared=0};
+    for (int D=0; D<this.dimensions; D++) {
+        double dx = minimum_image( this_particle->position[D], other_particle->position[D], this_particle->getBoxLength() );
+        //dim_distance[D] = dx;
+        //distance.distance_squared += dx*dx;
+    }
+
+    return distance;
+}
+*/
 
 #endif
 
