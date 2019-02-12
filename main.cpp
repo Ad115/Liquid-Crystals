@@ -5,6 +5,7 @@
 #include "src/ParticleSystem.hpp"
 #include "src/Particle.hpp"
 #include "src/random.h"
+// holA
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
 double measure_temperature(Particle& p) {
     return p.kinetic_energy();
