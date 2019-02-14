@@ -5,27 +5,34 @@
 #include "src/ParticleSystem.hpp"
 #include "src/Particle.hpp"
 #include "src/random.h"
-// holA
+
+
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
+
+
 double measure_temperature(Particle& p) {
     return p.kinetic_energy();
 }
 
 int main( int argc, char **argv )
 {
-    init_random();
+    int n_particles = 10;
+    int dimensions = 3; 
+    double numeric_density = 1;
 
-    int nParticles=100000;
-    int dimensions=3; 
-    double numeric_density=1;
-    ParticleSystem<Particle> miSistemaParticula( nParticles, dimensions, numeric_density );
-    miSistemaParticula.write_xyz();
-    return 0;
+    ParticleSystem<Particle> system(n_particles, dimensions, numeric_density);
+
+    // Output positions to an XYZ file.
+    system.write_xyz(std::cout);
+
+    // Print the system's state
+    std::cout << system << std::endl;
+
+    std::cout << "temperature: "
+              << system.measure(measure_temperature)
+              << std::endl;
 }
 
 
 
-    //std::cout << "{\"system\": " << miSistemaParticula;
-    //std::cout << ", \"temperature\": "
-    //          << miSistemaParticula.measure<double>(measure_temperature)
-    //          << "}" << std::endl;
+    

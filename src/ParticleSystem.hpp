@@ -39,10 +39,10 @@ class ParticleSystem {
         double distance( ParticleClass other_particle );
 
         template< typename ParticleFunction >
-        void map_to_particles(ParticleFunction particle_fn);
+        ParticleFunction map_to_particles(ParticleFunction particle_fn);
     
 
-        template< typename Value, typename ParticleFunction >
+        template< typename Value=double, typename ParticleFunction >
         Value measure(ParticleFunction measure_fn);
 
         template< typename T >
@@ -51,8 +51,8 @@ class ParticleSystem {
                     const ParticleSystem<T>& sys
         );
 
-        double getBoxLength(){ return this->system_container->side_length(); };
-        void write_xyz(void);
+        double getBoxLength(){ return this->system_container.side_length(); };
+        void write_xyz(std::ostream& stream);
 };
 
 
@@ -111,13 +111,20 @@ class init_simple_positions { /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 template <typename Particle_class>
-void ParticleSystem<Particle_class>::write_xyz() {
-    std::cout << this->n << "\n";
+void ParticleSystem<Particle_class>::write_xyz(std::ostream& stream) { /*
+        * Output the positions of the particles in the XYZ format.
+        * The format consists in a line with the number of particles
+        * followed by the space-separated coordinates of each particle 
+        * in different lines.
+        */
+    stream << this->n << "\n";
     for (auto p: particles) {
-        std::cout << "\n";
+        stream << "\n";
         for (int D=0; D<dimensions; D++)
-            std::cout << p.position[D] << " ";
+            stream << p.position[D] << " ";
     }
+    stream << std::endl;
+
     return;
 };
 
@@ -143,9 +150,9 @@ std::ostream& operator<<(std::ostream& stream,
 
 template < typename Particle_class >
 ParticleSystem<Particle_class>::ParticleSystem( 
-                int nParticles, //1: Number of particles to create
-                int dimensions, //2: Number Dimensions to work [MAX=3]   
-                double numeric_density //3: Initial numeric density (particles/volume)
+                int nParticles, // Number of particles to create
+                int dimensions, // Dimensionality of the system [MAX=3]   
+                double numeric_density // Initial numeric density (particles/volume)
                 //positions_init_fn init_positions,
                 //velocities_init_fn init_velocities
     )
@@ -161,34 +168,31 @@ ParticleSystem<Particle_class>::ParticleSystem(
 
 template< typename Particle_class >
 template< typename ParticleFunction >
-void ParticleSystem<Particle_class>::map_to_particles(
-        ParticleFunction particle_fn) { /*
+ParticleFunction ParticleSystem<Particle_class>::map_to_particles(
+            ParticleFunction particle_fn) { /*
         * Map the given function to the particles. 
         * Useful for initialization.
         */
-
-    for (auto& p : particles) {
-        particle_fn(p);
-    }
-
-    return;
+    return std::for_each(particles.begin(), particles.end(), particle_fn);
 };
+
 
 template< typename Particle_class >
 template< typename Value, typename ParticleFunction >
-Value ParticleSystem<Particle_class>::measure(
-        ParticleFunction measure_fn) { /*
-    * Measure some property of the particles. 
-    * Accumulates the results of the measure function.
-    */
+
+Value ParticleSystem<Particle_class>::measure(ParticleFunction measure_fn) { /*
+        * Measure some property of the particles. 
+        * Accumulates the results of the measure function.
+        */
+
     // Measure the property for each particle
     std::vector<Value> measurements(this->n);
     std::transform( this->particles.begin(), this->particles.end(),
                     measurements.begin(),
                     measure_fn );
 
-    Value sum(0);
-    return std::accumulate(std::begin(measurements), std::end(measurements),
+    return std::accumulate(std::begin(measurements),
+                           std::end(measurements),
                            Value(0));
 };
 
