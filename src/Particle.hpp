@@ -8,29 +8,27 @@
 
 class Particle {
     public:
-        unsigned int dimensions;
         Vector position;
         Vector velocity;
         Vector force;
 
         //Constructor
         Particle( unsigned int dimensions )
-            : dimensions(dimensions),
-              position( dimensions ),
-              velocity( dimensions ),  
-              force( dimensions ) {}
+            : position(dimensions),
+              velocity(dimensions),  
+              force(dimensions) {}
 
         //Destructor
         ~Particle() = default;
+
+        unsigned dimensions() { return position.dimensions(); }
 
         double kinetic_energy() {
             Vector& v = this->velocity;
             return 1/2. * (v*v);
         };
-
         
         friend std::ostream& operator<<(std::ostream& s, const Particle& p);
-                        
 
 };
 
