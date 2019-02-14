@@ -14,7 +14,7 @@ class Vector {
         explicit Vector(int dimensions) 
             : vector(dimensions) {}
 
-        unsigned size() const { return vector.size(); }
+        unsigned dimensions() const { return vector.size(); }
 
         double& operator[](int index) { return vector[index]; }
         double operator[](int index) const { return vector[index]; }
@@ -24,9 +24,9 @@ class Vector {
             */
             Vector result(dimensions);
 
-            for (int D=0; D<dimensions; D++) {
+            for (int D=0; D<dimensions; D++)
                 result[D] = random_uniform();
-            }
+
             return result;
         }
 
@@ -35,10 +35,10 @@ class Vector {
             * (v1 + v2)[i] == v1[i] + v2[i]
             */            
             Vector result(*this);
-            for (int i=0; i<result.size(); i++) 
+            for (int i=0; i<result.dimensions(); i++) 
                 result[i] += other[i];
 
-            return result;                
+            return result;
         }
 
         Vector operator-(const Vector& other) const { /*
@@ -46,7 +46,7 @@ class Vector {
             * (v1 - v2)[i] == v1[i] - v2[i]
             */
             Vector result(*this);
-            for (int i=0; i<result.size(); i++) 
+            for (int i=0; i<result.dimensions(); i++) 
                 result[i] -= other[i];
 
             return result;
@@ -57,7 +57,7 @@ class Vector {
             * (v1 * v2) = v1[1]*v2[1] + v1[2]*v2[2] + ...
             */
             double result = 0;
-            for (int i=0; i<other.size(); i++) 
+            for (int i=0; i<other.dimensions(); i++) 
                 result += (*this)[i] * other[i];
 
             return result;
