@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <iterator>
-#include "random.h"
+#include "Random.hpp"
 
 class Vector {
     private:
