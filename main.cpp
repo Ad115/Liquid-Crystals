@@ -1,10 +1,7 @@
-#include <vector>
-#include <algorithm>
 #include <iostream>
-#include <cmath>
+#include <fstream>
 #include "src/ParticleSystem.hpp"
 #include "src/Particle.hpp"
-#include "src/random.h"
 
 
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
@@ -16,16 +13,18 @@ double measure_temperature(Particle& p) {
 
 int main( int argc, char **argv )
 {
-    int n_particles = 10;
+    int n_particles = 100000;
     int dimensions = 3; 
     double numeric_density = 1;
 
     ParticleSystem<Particle> system(n_particles, dimensions, numeric_density);
 
-    // Output positions to an XYZ file.
-    system.write_xyz(std::cout);
 
-    // Print the system's state
+    // Output positions to an XYZ file.
+    std::ofstream output("output.xyz");
+    system.write_xyz(output);
+
+    // Print the system's initial state
     std::cout << system << std::endl;
 
     std::cout << "temperature: "

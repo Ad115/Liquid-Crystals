@@ -5,6 +5,8 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <cmath>
+#include <algorithm>
 #include "Vector.hpp"
 #include "Container.hpp"
 
