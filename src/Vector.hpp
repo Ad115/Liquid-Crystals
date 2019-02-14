@@ -14,7 +14,7 @@ class Vector {
         explicit Vector(int dimensions) 
             : vector(dimensions) {}
 
-        unsigned int size() const { return vector.size(); }
+        unsigned size() const { return vector.size(); }
 
         double& operator[](int index) { return vector[index]; }
         double operator[](int index) const { return vector[index]; }
@@ -30,7 +30,7 @@ class Vector {
             return result;
         }
 
-        Vector operator+(const Vector& other) { /*
+        Vector operator+(const Vector& other) const { /*
             * Component-wise addition:
             * (v1 + v2)[i] == v1[i] + v2[i]
             */            
@@ -41,7 +41,7 @@ class Vector {
             return result;                
         }
 
-        Vector operator-(const Vector& other) { /*
+        Vector operator-(const Vector& other) const { /*
             * Component-wise substraction:
             * (v1 - v2)[i] == v1[i] - v2[i]
             */
@@ -52,13 +52,13 @@ class Vector {
             return result;
         }
 
-        double operator*(const Vector& other) { /*
+        double operator*(const Vector& other) const { /*
             * Dot product: 
             * (v1 * v2) = v1[1]*v2[1] + v1[2]*v2[2] + ...
             */
             double result = 0;
             for (int i=0; i<other.size(); i++) 
-                result += vector[i] * other[i];
+                result += (*this)[i] * other[i];
 
             return result;
         }
