@@ -19,26 +19,30 @@
 /*Particles system class, it is the space
   where the particles will be simulated
 Local joke: Camel Case xD */
-template< typename Particle_class >
+template< typename ParticleClass >
 class ParticleSystem {
     private:
-        unsigned int n;
-        int dimensions;
-
-        Container system_container;
-        std::vector<Particle_class> particles;        
+        Container container;
+        std::vector<ParticleClass> particles;        
 
     public:
         ParticleSystem( 
-                int nParticles, //1: Number of particles to create
-                int dimensions, //2: Number Dimensions to work [MAX=3]   
-                double numeric_density //3: Initial numeric density (particles/volume)
+                int n_particles, // Number of particles to create
+                int dimensions, // Dimensionality of the system [2 or 3]
+                double numeric_density // no. of particles / unit volume
         );
         ~ParticleSystem() = default;
-        double minimum_image( double r1, double r2, double box_length );
 
-        template < class ParticleClass >
-        double distance( ParticleClass other_particle );
+        unsigned dimensions(); /*
+        * Getter for the dimensionality of the system.
+        */
+        unsigned n_particles(); /*
+        * The number of particles in the system.
+        */
+        double container_side_length(); /*
+        * The length of each side of the container.
+        * (warning, assumes a square container)
+        */
 
         template< typename ParticleFunction >
         ParticleFunction map_to_particles(ParticleFunction particle_fn);
@@ -48,13 +52,35 @@ class ParticleSystem {
         Value measure(ParticleFunction measure_fn);
 
         template< typename T >
-        friend std::ostream& operator<<(
-                    std::ostream& stream, 
-                    const ParticleSystem<T>& sys
-        );
+        friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T>&); /*
+        * To print the state of the system with:
+        *   
+        *   std::cout << system;
+        * 
+        * Output: 
+        * 
+        *   {"container": {...container info...}, 
+        *    "particles": [{...particle info...}, {...}, ...] }
+        */
 
-        double getBoxLength(){ return this->system_container.side_length(); };
-        void write_xyz(std::ostream& stream);
+        void write_xyz(std::ostream&&); /*
+        * Output the positions of the particles in the XYZ format.
+        * The format consists in a line with the number of particles,
+        * then a comment line followed by the space-separated coordinates 
+        * of each particle in different lines.
+        * 
+        * Example (for 3 particles in the xyz diagonal):
+        * 
+        *   10
+        *   
+        *   1.0 1.0 1.0
+        *   1.5 1.5 1.5
+        *   2.0 2.0 2.0
+        */
+
+        double minimum_image( double r1, double r2, double box_length );
+
+        double distance( ParticleClass other_particle );
 };
 
 
@@ -112,65 +138,29 @@ class init_simple_positions { /*
     Part II: IMPLEMENTATION
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-template <typename Particle_class>
-void ParticleSystem<Particle_class>::write_xyz(std::ostream& stream) { /*
-        * Output the positions of the particles in the XYZ format.
-        * The format consists in a line with the number of particles
-        * followed by the space-separated coordinates of each particle 
-        * in different lines.
-        */
-    stream << this->n << "\n";
-    for (auto p: particles) {
-        stream << "\n";
-        for (int D=0; D<dimensions; D++)
-            stream << p.position[D] << " ";
-    }
-    stream << std::endl;
-
-    return;
-};
-
-template< typename Particle_class >
-std::ostream& operator<<(std::ostream& stream, 
-                         const ParticleSystem<Particle_class>& sys) {
-
-    stream << "{";
-
-    stream << "\"container\": " << sys.system_container << ", ";
-
-    stream << "\"particles\": [";
-    std::copy(std::begin(sys.particles), std::end(sys.particles)-1, 
-              std::ostream_iterator<Particle_class>(stream, ", "));
-
-    stream << sys.particles.back() 
-           << "]";
-
-    stream << "}";
-
-    return stream;
-};
-
-template < typename Particle_class >
-ParticleSystem<Particle_class>::ParticleSystem( 
-                int nParticles, // Number of particles to create
+template < typename ParticleClass >
+ParticleSystem<ParticleClass>::ParticleSystem( 
+                int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [MAX=3]   
                 double numeric_density // Initial numeric density (particles/volume)
                 //positions_init_fn init_positions,
                 //velocities_init_fn init_velocities
     )
-    : n(nParticles) , 
-      dimensions(dimensions), 
-      particles(n, Particle_class(dimensions)),
-      system_container( dimensions, pow(n/numeric_density, 1/3.) ) {
+    : particles(n_particles, ParticleClass(dimensions)),
+      container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {
+
     //Start the particle setup
     map_to_particles( init_random_velocities( dimensions ) );
-    map_to_particles( init_simple_positions( dimensions, system_container.side_length(), n ));
+
+    map_to_particles( init_simple_positions( dimensions, 
+                                             container_side_length(), 
+                                             n_particles ));
 };
 
 
-template< typename Particle_class >
+template< typename ParticleClass >
 template< typename ParticleFunction >
-ParticleFunction ParticleSystem<Particle_class>::map_to_particles(
+ParticleFunction ParticleSystem<ParticleClass>::map_to_particles(
             ParticleFunction particle_fn) { /*
         * Map the given function to the particles. 
         * Useful for initialization.
@@ -179,23 +169,100 @@ ParticleFunction ParticleSystem<Particle_class>::map_to_particles(
 };
 
 
-template< typename Particle_class >
+template< typename ParticleClass >
 template< typename Value, typename ParticleFunction >
 
-Value ParticleSystem<Particle_class>::measure(ParticleFunction measure_fn) { /*
+Value ParticleSystem<ParticleClass>::measure(ParticleFunction measure_fn) { /*
         * Measure some property of the particles. 
         * Accumulates the results of the measure function.
         */
 
     // Measure the property for each particle
-    std::vector<Value> measurements(this->n);
-    std::transform( this->particles.begin(), this->particles.end(),
+    std::vector<Value> measurements( n_particles() );
+    std::transform( particles.begin(), particles.end(),
                     measurements.begin(),
                     measure_fn );
 
     return std::accumulate(std::begin(measurements),
                            std::end(measurements),
                            Value(0));
+};
+
+template <typename ParticleClass>
+unsigned ParticleSystem<ParticleClass>::dimensions() { /*
+        * Getter for the dimensionality of the system.
+        */
+        return container.dimensions();
+}
+
+template <typename ParticleClass>
+unsigned ParticleSystem<ParticleClass>::n_particles() { /*
+        * The number of particles in the system.
+        */
+        return particles.size();
+}
+
+template <typename ParticleClass>
+double ParticleSystem<ParticleClass>::container_side_length() { /*
+        * The length of each side of the container.
+        * (warning, assumes a square container)
+        */
+        return container.side_length();
+}
+
+template <typename ParticleClass>
+void ParticleSystem<ParticleClass>::write_xyz(std::ostream&& stream) { /*
+        * Output the positions of the particles in the XYZ format.
+        * The format consists in a line with the number of particles,
+        * then a comment line followed by the space-separated coordinates 
+        * of each particle in different lines.
+        * 
+        * Example (for 3 particles in the xyz diagonal):
+        * 
+        *   10
+        *   
+        *   1.0 1.0 1.0
+        *   1.5 1.5 1.5
+        *   2.0 2.0 2.0
+        */
+    stream << n_particles() << "\n";
+    for (auto p: particles) {
+        stream << "\n";
+        for (int D = 0; D < dimensions(); D++)
+            stream << p.position[D] << " ";
+    }
+    stream << std::endl;
+
+    return;
+};
+
+template< typename ParticleClass >
+std::ostream& operator<<(std::ostream& stream, 
+                         const ParticleSystem<ParticleClass>& sys) { /*
+    * To print the state of the system with:
+    *   
+    *   std::cout << system;
+    * 
+    * Output: 
+    * 
+    *   {"container": {...container info...}, 
+    *    "particles": [{...particle info...}, {...}, ...] }
+    */
+
+    stream << "{";
+
+    stream << "\"container\": " << sys.container << ", ";
+
+    stream << "\"particles\": [";
+    std::copy(std::begin(sys.particles), std::end(sys.particles)-1, 
+              std::ostream_iterator<ParticleClass>(stream, ", "));
+
+    stream << sys.particles.back() 
+           << "]";
+
+    stream << "}";
+
+    return stream;
 };
 
 double minimum_image(double r1, double r2, double box_length) { /*

@@ -21,12 +21,11 @@ int main( int argc, char **argv )
 
 
     // Output positions to an XYZ file.
-    std::ofstream output("output.xyz");
-    system.write_xyz(output);
+    system.write_xyz( std::ofstream("output.xyz") );
 
     // Print the system's initial state
     std::cout << system << std::endl;
-
+    
     std::cout << "temperature: "
               << system.measure(measure_temperature)
               << std::endl;
