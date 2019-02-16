@@ -1,11 +1,15 @@
 #ifndef INITIAL_CONDITIONS_HEADER
 #define INITIAL_CONDITIONS_HEADER
 
+#include <cmath>
+#include "Vector.hpp"
+
+
 template< typename ...IList > // <-- Base case, stops recursion with no parameters
 class InitialConditions {
     public:
-        template< typename ParticleClass >
-        void operator()(ParticleSystem<ParticleClass>& system) {}
+        template< typename ParticleSystem >
+        void operator()(ParticleSystem& system) {}
 };
 
 template< typename Initializer, typename ...IList > // <-- Recursive case

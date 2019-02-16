@@ -2,10 +2,10 @@
 #define PARTICLE_SYSTEM_HEADER
 
 #include <vector>
+#include <cmath>
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <cmath>
 #include <algorithm>
 #include "Container.hpp"
 
