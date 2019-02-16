@@ -26,7 +26,7 @@ int main( int argc, char **argv )
     );
 
 
-    // Output positions to an XYZ file.
+    // Output initial positions to an XYZ file.
     system.write_xyz( std::ofstream("output.xyz") );
 
     // Print the system's initial state
