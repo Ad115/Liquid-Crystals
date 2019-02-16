@@ -12,8 +12,8 @@ class Container {
             : _side_lengths(dimensions, side_length)
               {}
 
-        unsigned int dimensions() { return _side_lengths.size(); }
-        double side_length() { return _side_lengths[0]; }
+        unsigned int dimensions() const { return _side_lengths.size(); }
+        double side_length() const { return _side_lengths[0]; }
         const std::vector<double>& side_lengths() const { return _side_lengths; }
         friend std::ostream& operator<<(std::ostream&, const Container&);
 

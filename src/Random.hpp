@@ -40,7 +40,6 @@ bool random_test(double probability); /**
 
 #include <stdlib.h>
 #include <time.h>
-#include "random.h"
 
 void init_random_with_seed(unsigned long int seed) { /*
     * Initialize the c random number generator with the given seed.

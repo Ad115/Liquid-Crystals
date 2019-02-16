@@ -21,7 +21,10 @@ class Particle {
         //Destructor
         ~Particle() = default;
 
-        unsigned dimensions() { return position.dimensions(); }
+        unsigned dimensions() const { return position.dimensions(); }
+
+        void set_position(const Vector& new_position) { position = new_position; }
+        void set_velocity(const Vector& new_velocity) { velocity = new_velocity; }
 
         double kinetic_energy() {
             Vector& v = this->velocity;

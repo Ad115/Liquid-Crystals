@@ -16,32 +16,35 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 
-/*Particles system class, it is the space
-  where the particles will be simulated
-Local joke: Camel Case xD */
+
+/* Local joke: Camel Case xD */
 template< typename ParticleClass >
-class ParticleSystem {
+class ParticleSystem { /*
+    * The main class. Handles the particles vector and the container in which 
+    * the simulation develops.
+    */
     private:
-        Container container;
+        Container _container;
         std::vector<ParticleClass> particles;        
 
     public:
+        template< typename Initializer >
         ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [2 or 3]
-                double numeric_density // no. of particles / unit volume
+                double numeric_density, // no. of particles / unit volume
+                Initializer initial_conditions // Sets initial conditions
         );
         ~ParticleSystem() = default;
 
-        unsigned dimensions(); /*
+        unsigned dimensions() const; /*
         * Getter for the dimensionality of the system.
         */
-        unsigned n_particles(); /*
+        unsigned n_particles() const; /*
         * The number of particles in the system.
         */
-        double container_side_length(); /*
-        * The length of each side of the container.
-        * (warning, assumes a square container)
+        const Container& container() const; /*
+        * The space in which the particles interact.
         */
 
         template< typename ParticleFunction >
@@ -85,76 +88,22 @@ class ParticleSystem {
 
 
 
-class init_random_velocities { /*
-    * Functor to initialize random velocities.
-    */
-    unsigned int dimensions;
-
-    public:
-        init_random_velocities(unsigned int dimensions) 
-            : dimensions(dimensions) {}
-        template < class ParticleClass >
-        void operator()(ParticleClass& p) {
-            p.velocity =  Vector::random_unit(dimensions);
-        }
-};
-
-class init_simple_positions { /*
-    * Functor to initialize random velocities.
-    */
-    unsigned int dimensions;
-    double L;
-    int cube_length;
-    int n;
-    int particle_idx;
-
-    public:
-        init_simple_positions(unsigned int dimensions, double L, int n) 
-            : dimensions(dimensions), 
-              L(L), n(n),
-
-              // The lowest integer such that cube_length^DIMENSIONS >= n. Think of a 
-              // cube in DIMENSIONS with side cube_length where all particles are evenly 
-              // spaced on a simple grid.
-              cube_length(ceil(pow(n, 1./dimensions))) // No. of particles along every side
-                                                       // of the cube
-              {}
-        template < class ParticleClass >
-        void operator()(ParticleClass& p) {
-            Vector position(dimensions);
-            for (int D=0; D<dimensions; D++) {
-                // Get position in a hypercube with volume = cube_length^DIMENSIONS.
-                position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
-                // Rescale to a box of volume = L^DIMENSIONS
-                position[D] *= (L/cube_length)*0.75;
-            }
-            p.position =  position;
-            particle_idx++;
-        }
-};
-
-
 /*  
     Part II: IMPLEMENTATION
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-template < typename ParticleClass >
+template< typename ParticleClass >
+template< typename Initializer >
 ParticleSystem<ParticleClass>::ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [MAX=3]   
-                double numeric_density // Initial numeric density (particles/volume)
-                //positions_init_fn init_positions,
-                //velocities_init_fn init_velocities
+                double numeric_density, // Initial numeric density (particles/volume)
+                Initializer set_initial_conditions
     )
     : particles(n_particles, ParticleClass(dimensions)),
-      container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {
+      _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {
 
-    //Start the particle setup
-    map_to_particles( init_random_velocities( dimensions ) );
-
-    map_to_particles( init_simple_positions( dimensions, 
-                                             container_side_length(), 
-                                             n_particles ));
+    set_initial_conditions(*this);
 };
 
 
@@ -171,7 +120,6 @@ ParticleFunction ParticleSystem<ParticleClass>::map_to_particles(
 
 template< typename ParticleClass >
 template< typename Value, typename ParticleFunction >
-
 Value ParticleSystem<ParticleClass>::measure(ParticleFunction measure_fn) { /*
         * Measure some property of the particles. 
         * Accumulates the results of the measure function.
@@ -189,25 +137,24 @@ Value ParticleSystem<ParticleClass>::measure(ParticleFunction measure_fn) { /*
 };
 
 template <typename ParticleClass>
-unsigned ParticleSystem<ParticleClass>::dimensions() { /*
+unsigned ParticleSystem<ParticleClass>::dimensions() const { /*
         * Getter for the dimensionality of the system.
         */
-        return container.dimensions();
+        return container().dimensions();
 }
 
 template <typename ParticleClass>
-unsigned ParticleSystem<ParticleClass>::n_particles() { /*
+unsigned ParticleSystem<ParticleClass>::n_particles() const { /*
         * The number of particles in the system.
         */
         return particles.size();
 }
 
 template <typename ParticleClass>
-double ParticleSystem<ParticleClass>::container_side_length() { /*
-        * The length of each side of the container.
-        * (warning, assumes a square container)
+const Container& ParticleSystem<ParticleClass>::container() const { /*
+        * The space in which the particles interact.
         */
-        return container.side_length();
+        return _container;
 }
 
 template <typename ParticleClass>
@@ -251,7 +198,7 @@ std::ostream& operator<<(std::ostream& stream,
 
     stream << "{";
 
-    stream << "\"container\": " << sys.container << ", ";
+    stream << "\"container\": " << sys.container() << ", ";
 
     stream << "\"particles\": [";
     std::copy(std::begin(sys.particles), std::end(sys.particles)-1, 
