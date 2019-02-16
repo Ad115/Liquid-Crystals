@@ -31,7 +31,6 @@ int main( int argc, char **argv )
         InitialConditions<SimpleCubicLattice, RandomVelocities>()
     );
 
-
     // Output initial positions to an XYZ file.
     system.write_xyz( std::ofstream("output.xyz") );
 

@@ -132,8 +132,8 @@ std::vector<Value> ParticleSystem<ParticleClass>::measure_particles(
 
     // Measure the property for each particle
     std::transform( particles.begin(), particles.end(),
-                           measurements.begin(),
-                           measure_fn );
+                    measurements.begin(),
+                    measure_fn );
 
     return measurements;
 };
