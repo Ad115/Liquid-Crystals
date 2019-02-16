@@ -1,15 +1,22 @@
 #include <iostream>
 #include <fstream>
+#include <numeric>
 #include "src/Particle.hpp"
 #include "src/ParticleSystem.hpp"
 #include "src/InitialConditions.hpp"
 
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
 
-
-double measure_temperature(Particle& p) {
-    return p.kinetic_energy();
+template< typename ParticleSystem >
+double temperature(ParticleSystem& system) { /*
+    * Measure the temperature of the system (the sum of the particle's kinetic energies).
+    */
+    auto measurements = system.measure_particles( 
+                            [](Particle& p) { return p.kinetic_energy(); } 
+                        );
+    return std::accumulate(std::begin(measurements), std::end(measurements), 0.);
 }
+
 
 int main( int argc, char **argv )
 {
@@ -32,6 +39,6 @@ int main( int argc, char **argv )
     std::cout << system << std::endl;
 
     std::cout << "temperature: "
-              << system.measure(measure_temperature)
+              << temperature(system)
               << std::endl;
 }

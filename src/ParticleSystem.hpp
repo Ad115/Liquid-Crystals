@@ -5,7 +5,6 @@
 #include <cmath>
 #include <iostream>
 #include <iterator>
-#include <numeric>
 #include <algorithm>
 #include "Container.hpp"
 
@@ -53,9 +52,9 @@ class ParticleSystem { /*
         */    
 
         template< typename Value=double, typename ParticleFunction >
-        Value measure(ParticleFunction measure_fn); /*
+        std::vector<Value> measure_particles(ParticleFunction measure_fn); /*
         * Measure some property of the particles. 
-        * Accumulates the results of the measure function.
+        * Returns a vector of the measurements for each particle.
         */
 
         template< typename T >
@@ -124,20 +123,19 @@ ParticleFunction ParticleSystem<ParticleClass>::map_to_particles(
 
 template< typename ParticleClass >
 template< typename Value, typename ParticleFunction >
-Value ParticleSystem<ParticleClass>::measure(ParticleFunction measure_fn) { /*
-        * Measure some property of the particles. 
-        * Accumulates the results of the measure function.
-        */
+std::vector<Value> ParticleSystem<ParticleClass>::measure_particles(
+        ParticleFunction measure_fn) { /*
+    * Measure some property of the particles. 
+    * Returns a vector of the measurements for each particle.
+    */
+    std::vector<Value> measurements( n_particles() );
 
     // Measure the property for each particle
-    std::vector<Value> measurements( n_particles() );
     std::transform( particles.begin(), particles.end(),
-                    measurements.begin(),
-                    measure_fn );
+                           measurements.begin(),
+                           measure_fn );
 
-    return std::accumulate(std::begin(measurements),
-                           std::end(measurements),
-                           Value(0));
+    return measurements;
 };
 
 template <typename ParticleClass>
