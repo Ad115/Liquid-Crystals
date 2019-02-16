@@ -17,7 +17,7 @@ class InitialConditions<Initializer, IList...> {
         void operator()(ParticleSystem<ParticleClass>& system) {
 
             // Initialize with "Initializer" conditions
-            system.map_to_particles( Initializer::with_parameters_from(system) );
+            Initializer::initialize(system);
 
             // Initialize with the remaining conditions
             auto remaining_conditions = InitialConditions<IList...>(); // Create object
@@ -26,7 +26,17 @@ class InitialConditions<Initializer, IList...> {
 };
 
 
-class SimpleCubicLattice {
+class Initializer {
+    public:
+
+        template< typename ParticleClass >
+        static Initializer initialize(ParticleSystem<ParticleClass>& system) { 
+            return Initializer(); 
+        }
+};
+
+
+class SimpleCubicLattice : Initializer {
     
     unsigned dimensions;
     double L;
@@ -34,25 +44,26 @@ class SimpleCubicLattice {
     int particle_idx=0;
 
     public:
-        SimpleCubicLattice(unsigned d, double L, int l) 
-            : dimensions(d), L(L), cube_length(l) 
+
+        template< typename ParticleClass >
+        SimpleCubicLattice(const ParticleSystem<ParticleClass>& system) 
+            : dimensions(system.dimensions()),
+              L(system.container().side_length()),
+              cube_length( // No. of particles along every side of the cube
+                  ceil(pow(system.n_particles(), 1./system.dimensions())) 
+                  // The lowest integer such that cube_length^DIMENSIONS >= n. 
+                  // Think of a cube with side cube_length where all particles 
+                  // are evenly spaced on a simple grid.
+              )
             {}
 
         template< typename ParticleClass >
-        static SimpleCubicLattice with_parameters_from(
-                const ParticleSystem<ParticleClass>& system) {
+        static Initializer initialize(ParticleSystem<ParticleClass>& system) {
 
-            unsigned dimensions = system.dimensions();
-            double L = system.container().side_length();
+            auto initializer = SimpleCubicLattice(system);
+            system.map_to_particles(initializer);
 
-            // The lowest integer such that cube_length^DIMENSIONS >= n. Think of a 
-            // cube in DIMENSIONS with side cube_length where all particles are evenly 
-            // spaced on a simple grid.
-            int cube_length = ceil(pow(system.n_particles(), 1./system.dimensions()));
-                                            // No. of particles along every side
-                                            // of the cube
-
-            return SimpleCubicLattice(dimensions, L, cube_length);
+            return initializer;
         }
 
         template< typename ParticleClass >
@@ -70,23 +81,16 @@ class SimpleCubicLattice {
         }
 };
 
-class RandomVelocities {/*
-    * Functor to initialize random velocities.
-    * 
-    * Instantiate with the parameters of a ParticleSystem<Particle>: 
-    * 
-    *   instance = RandomVelocities::with_parameters_from(system)
-    * 
-    * Initialize the system:
-    * 
-    *   system.map_to_particles(instance)
-    */
+class RandomVelocities : Initializer {
 
     public:
         template< typename ParticleClass >
-        static RandomVelocities with_parameters_from(
-                const ParticleSystem<ParticleClass>& system) { 
-            return RandomVelocities();  
+        static Initializer initialize(ParticleSystem<ParticleClass>& system) { 
+
+            auto initializer = RandomVelocities();
+            system.map_to_particles(initializer);
+
+            return initializer;  
         }
 
         template< typename ParticleClass >
