@@ -2,7 +2,6 @@
 #define PARTICLE_HEADER
 #include <iostream>
 #include <vector>
-#include "ParticleSystem.hpp"
 #include "Vector.hpp"
 
 

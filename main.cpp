@@ -2,7 +2,7 @@
 #include <fstream>
 #include "src/ParticleSystem.hpp"
 #include "src/Particle.hpp"
-#include "src/Simulation.hpp"
+#include "src/InitialConditions.hpp"
 
 
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
@@ -36,7 +36,3 @@ int main( int argc, char **argv )
               << system.measure(measure_temperature)
               << std::endl;
 }
-
-
-
-    

@@ -1,6 +1,5 @@
-#include "Container.hpp"
-#include "ParticleSystem.hpp"
-
+#ifndef INITIAL_CONDITIONS_HEADER
+#define INITIAL_CONDITIONS_HEADER
 
 template< typename ...IList > // <-- Base case, stops recursion with no parameters
 class InitialConditions {
@@ -13,8 +12,8 @@ template< typename Initializer, typename ...IList > // <-- Recursive case
 class InitialConditions<Initializer, IList...> {
     public:
 
-        template< typename ParticleClass >
-        void operator()(ParticleSystem<ParticleClass>& system) {
+        template< typename ParticleSystem >
+        void operator()(ParticleSystem& system) {
 
             // Initialize with "Initializer" conditions
             Initializer::initialize(system);
@@ -29,10 +28,8 @@ class InitialConditions<Initializer, IList...> {
 class Initializer {
     public:
 
-        template< typename ParticleClass >
-        static Initializer initialize(ParticleSystem<ParticleClass>& system) { 
-            return Initializer(); 
-        }
+        template< typename ParticleSystem >
+        static Initializer initialize(ParticleSystem& system);
 };
 
 
@@ -45,8 +42,8 @@ class SimpleCubicLattice : Initializer {
 
     public:
 
-        template< typename ParticleClass >
-        SimpleCubicLattice(const ParticleSystem<ParticleClass>& system) 
+        template< typename ParticleSystem >
+        SimpleCubicLattice(const ParticleSystem& system) 
             : dimensions(system.dimensions()),
               L(system.container().side_length()),
               cube_length( // No. of particles along every side of the cube
@@ -57,8 +54,8 @@ class SimpleCubicLattice : Initializer {
               )
             {}
 
-        template< typename ParticleClass >
-        static Initializer initialize(ParticleSystem<ParticleClass>& system) {
+        template< typename ParticleSystem >
+        static Initializer initialize(ParticleSystem& system) {
 
             auto initializer = SimpleCubicLattice(system);
             system.map_to_particles(initializer);
@@ -84,8 +81,8 @@ class SimpleCubicLattice : Initializer {
 class RandomVelocities : Initializer {
 
     public:
-        template< typename ParticleClass >
-        static Initializer initialize(ParticleSystem<ParticleClass>& system) { 
+        template< typename ParticleSystem >
+        static Initializer initialize(ParticleSystem& system) { 
 
             auto initializer = RandomVelocities();
             system.map_to_particles(initializer);
@@ -98,3 +95,5 @@ class RandomVelocities : Initializer {
             p.set_velocity( Vector::random_unit(p.dimensions()) );
         }
 };
+
+#endif

@@ -7,7 +7,6 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
-#include "Vector.hpp"
 #include "Container.hpp"
 
 
@@ -48,11 +47,16 @@ class ParticleSystem { /*
         */
 
         template< typename ParticleFunction >
-        ParticleFunction map_to_particles(ParticleFunction particle_fn);
-    
+        ParticleFunction map_to_particles(ParticleFunction particle_fn); /*
+        * Map the given function to the particles. 
+        * Useful for initialization.
+        */    
 
         template< typename Value=double, typename ParticleFunction >
-        Value measure(ParticleFunction measure_fn);
+        Value measure(ParticleFunction measure_fn); /*
+        * Measure some property of the particles. 
+        * Accumulates the results of the measure function.
+        */
 
         template< typename T >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T>&); /*
