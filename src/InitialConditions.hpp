@@ -72,6 +72,34 @@ class random_velocities {
         }
 };
 
+template< typename ParticleSystem >
+double temperature(ParticleSystem& system) { /*
+    * Measure the temperature of the system (the sum of the particle's kinetic energies).
+    */
+    auto measurements = system.measure_particles( [n=system.n_particles()](Particle& p) { 
+					return 2./(3*n)*p.kinetic_energy(); 
+				} 
+                        );
+    return std::accumulate(std::begin(measurements), std::end(measurements), 0.);
+}
+
+class set_temperature {
+	double setpoint;
+    public:
+	set_temperature(double setpoint):setpoint(setpoint){}
+        template< typename ParticleSystem>
+        set_temperature& operator()(ParticleSystem& system) { 
+	double current_temperature=temperature(system);
+            using Particle = typename ParticleSystem::Particle_t;
+            system.map_to_particles(
+			    [scaling=sqrt(setpoint/current_temperature)](Particle& p)
+			    {p.velocity = scaling*p.velocity;});
+		
+
+            return *this;
+        }
+
+};
 
 
 #endif
