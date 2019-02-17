@@ -3,5 +3,7 @@ vscode/
 *.o
 *.out
 *.xyz
+*.bin
+
 
 
