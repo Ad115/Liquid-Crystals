@@ -49,8 +49,11 @@ class ParticleSystem { /*
 
         ContainerClass& container();
 
-        template<typename Initializer>
-        Initializer initialize_with(Initializer initializer);
+        template<typename SystemTransformation>
+        SystemTransformation apply(SystemTransformation system_transformation_fn); /*
+        * Apply a functor or function to the system. Useful for setting initial
+        * conditions and things like running a thermostat.
+        */
 
         template< typename ParticleFunction >
         ParticleFunction map_to_particles(ParticleFunction particle_fn); /*
@@ -64,10 +67,19 @@ class ParticleSystem { /*
         * Returns a vector of the measurements for each particle.
         */
 
-        void integrator(double dt);
+        void integrator(double dt); /*
+        * Implementation of a velocity Vertlet integrator.
+        * See: http://www.pages.drexel.edu/~cfa22/msim/node23.html#sec:nmni
+        * 
+        * This integrator gives a lower error O(dt^4) and more stability than
+        * the standard forward integration (x(t+dt) += v*dt + 1/2 * f * dt^2)
+        * by looking at more timesteps (t, t+dt) AND (t-dt), but in order to 
+        * improve memory usage, the integration is done in two steps.
+        */
 
-        void simulation_step(double dt);
-        
+        void simulation_step(double dt); /*
+        * Advance the state of the system by the amount defined by the time_step.
+        */
 
         template< typename T, typename O >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
@@ -178,11 +190,14 @@ ContainerClass& ParticleSystem<ParticleClass, ContainerClass>::container() { /*
 }
 
 template < typename ParticleClass, typename ContainerClass >
-template< typename Initializer >
-Initializer ParticleSystem<ParticleClass, ContainerClass>::initialize_with(
-            Initializer initializer) {
-        initializer(*this);
-        return initializer;
+template< typename SystemTransformation >
+SystemTransformation ParticleSystem<ParticleClass, ContainerClass>::apply(
+            SystemTransformation transform_fn) { /*
+        * Apply a functor or function to the system. Useful for setting initial
+        * conditions and things like running a thermostat.
+        */
+        transform_fn(*this);
+        return transform_fn;
 }
 
 
@@ -216,13 +231,21 @@ template< typename ParticleClass, typename ContainerClass >
 void ParticleSystem<ParticleClass, ContainerClass>::simulation_step(double time_step){ /*
     * Advance the state of the system by the amount defined by the time_step.
     */
-    (*this).integrator(time_step);
+    integrator(time_step);
 }
 
 template< typename ParticleClass, typename ContainerClass >
-void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){
+void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){ /*
+    * Implementation of a velocity Vertlet integrator.
+    * See: http://www.pages.drexel.edu/~cfa22/msim/node23.html#sec:nmni
+    * 
+    * This integrator gives a lower error O(dt^4) and more stability than
+    * the standard forward integration (x(t+dt) += v*dt + 1/2 * f * dt^2)
+    * by looking at more timesteps (t, t+dt) AND (t-dt), but in order to 
+    * improve memory usage, the integration is done in two steps.
+    */
 
-    // --- First integration half step
+    // --- First half step ---
     map_to_particles([dt, &box=container()](ParticleClass& p){
 
             // r(t+dt) = r(t) + v(t)*dt + 1/2*f*dt^2
@@ -237,7 +260,7 @@ void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){
     // r(t + dt) --> f(t + dt)
     update_forces();
     
-    // --- Second integration half step
+    // --- Second half step ---
     map_to_particles([dt](ParticleClass& p){
 
             // v(t+dt) = v(t+dt/2)+f(t+dt)/2*dt
@@ -254,7 +277,9 @@ void ParticleSystem<ParticleClass, ContainerClass>::update_forces(){
 
     for(int i=0; i<particles.size()-1; i++) {
         for(int j=i+1; j<particles.size(); j++) {
-            Vector force = particles[i].interaction(particles[j], container());
+            
+            Vector force = particles[i].force_law(particles[j], container());
+
             particles[i].force += force;
             particles[j].force -= force;
         }

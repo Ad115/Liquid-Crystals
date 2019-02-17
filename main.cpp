@@ -20,13 +20,13 @@ int main( int argc, char **argv ) {
     );
 
     // Apply initial conditions
-    system.initialize_with(simple_cubic_lattice{});
-    system.initialize_with(random_velocities{});
-    system.initialize_with(set_temperature(1E3));
+    system.apply(simple_cubic_lattice{});
+    system.apply(random_velocities{});
+    system.apply(set_temperature{0});
 
 
     std::ofstream outputf("output.xyz");
-    set_temperature thermostat(0);
+    set_temperature thermostat(1);
     int simulation_steps = 100000;
     int sampling_frecuency = 10;
     double time_step = 0.0005;
@@ -34,12 +34,12 @@ int main( int argc, char **argv ) {
     // Simulation loop
     for (int i=0; i<simulation_steps; i++) {
 
-        thermostat.setpoint += 5e-4;
-    	thermostat(system);
+        system.simulation_step(time_step);
 
         if(i%sampling_frecuency==0) system.write_xyz( outputf );
-        system.simulation_step(time_step);
-        
+
+        thermostat.setpoint += 5e-4;
+    	system.apply(thermostat);
     }
 
     // Print the system's final state

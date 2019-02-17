@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <functional>
 #include <initializer_list>
+#include <iostream>
 #include "Vector.hpp"
 
 
@@ -31,13 +32,12 @@ class simple_cubic_lattice {
         } 
 
         template< typename ParticleSystem>
-        simple_cubic_lattice& operator()(ParticleSystem& system) { 
+        void operator()(ParticleSystem& system) { 
+
             fetch_parameters_from(system);
 
             using Particle = typename ParticleSystem::Particle_t;
             system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
-
-            return *this;
         }
 
         template< typename ParticleClass>
@@ -59,26 +59,26 @@ class random_velocities {
 
     public:
         template< typename ParticleSystem>
-        random_velocities& operator()(ParticleSystem& system) { 
+        void operator()(ParticleSystem& system) { 
+
             using Particle = typename ParticleSystem::Particle_t;
-            system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
 
-            return *this;
-        }
-
-        template< typename ParticleClass >
-        void particle_fn(ParticleClass& p) {
-            p.set_velocity( Vector::random_unit(p.dimensions()) );
+            system.map_to_particles([this](Particle& p) { 
+                    p.set_velocity( Vector::random_unit(p.dimensions()) );
+                }
+            );
         }
 };
+
 
 template< typename ParticleSystem >
 double temperature(ParticleSystem& system) { /*
     * Measure the temperature of the system (the sum of the particle's kinetic energies).
     */
-    auto measurements = system.measure_particles( [n=system.n_particles()](Particle& p) { 
-					return 2./(3*n)*p.kinetic_energy(); 
-				} 
+    auto measurements = system.measure_particles( 
+                            [n=system.n_particles()](Particle& p) { 
+					            return 2./(3*n)*p.kinetic_energy(); 
+				            } 
                         );
     return std::accumulate(std::begin(measurements), std::end(measurements), 0.);
 }
@@ -93,18 +93,17 @@ class set_temperature {
          {}
 
         template< typename ParticleSystem>
-        set_temperature& operator()(ParticleSystem& system) { 
+        void operator()(ParticleSystem& system) { 
 
-            double current_temperature=temperature(system);
+            double current_temperature = temperature(system);
+            double correction_factor = sqrt(setpoint / current_temperature);
 
             using Particle = typename ParticleSystem::Particle_t;
-            system.map_to_particles(
-                [scaling=sqrt(setpoint/current_temperature)](Particle& p){
-                    p.velocity = scaling*p.velocity;
+
+            system.map_to_particles([correction_factor](Particle& p){
+                    p.velocity = correction_factor * p.velocity;
                 }
             );
-
-            return *this;
         }
 };
 
