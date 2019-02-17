@@ -45,6 +45,8 @@ class ParticleSystem { /*
         * The space in which the particles interact.
         */
 
+	ContainerClass& container();
+
         template< typename ParticleFunction >
         ParticleFunction map_to_particles(ParticleFunction particle_fn); /*
         * Map the given function to the particles. 
@@ -56,6 +58,8 @@ class ParticleSystem { /*
         * Measure some property of the particles. 
         * Returns a vector of the measurements for each particle.
         */
+
+	void integrator(double dt);
 
         template< typename T, typename O >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
@@ -87,6 +91,8 @@ class ParticleSystem { /*
         double minimum_image( double r1, double r2, double box_length );
 
         double distance( ParticleClass other_particle );
+	
+	void update_forces();
 };
 
 
@@ -160,6 +166,14 @@ const ContainerClass& ParticleSystem<ParticleClass, ContainerClass>::container()
 }
 
 template < typename ParticleClass, typename ContainerClass >
+ContainerClass& ParticleSystem<ParticleClass, ContainerClass>::container() { /*
+        * The space in which the particles interact.
+        */
+        return _container;
+}
+
+
+template < typename ParticleClass, typename ContainerClass >
 void ParticleSystem<ParticleClass, ContainerClass>::write_xyz(std::ostream& stream) { /*
         * Output the positions of the particles in the XYZ format.
         * The format consists in a line with the number of particles,
@@ -184,6 +198,41 @@ void ParticleSystem<ParticleClass, ContainerClass>::write_xyz(std::ostream& stre
 
     return;
 };
+
+template< typename ParticleClass, typename ContainerClass >
+void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){
+        map_to_particles([dt, &box=container()](ParticleClass& p){
+			// r(t+dt) = r(t) + v(t)*dt + [1/2*f*dt^2]
+    			p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;
+                	p.position = box.apply_boundary_conditions(p.position);
+			
+			// v(t+dt/2) = v(t)+f(t)/2*dt
+			p.velocity = p.velocity + dt/2.*p.force;
+
+		}
+	);
+	
+	// r(t + dt) --> f(t + dt)
+	update_forces();
+	
+	map_to_particles([dt](ParticleClass& p){
+			// v(t+dt) = v(t+dt/2)+f(t+dt)/2*dt
+			p.velocity = p.velocity + dt/2.*p.force;
+		}
+	);
+}
+
+template< typename ParticleClass, typename ContainerClass >
+void ParticleSystem<ParticleClass, ContainerClass>::update_forces(){
+	for(auto& p : particles){p.force=0*p.force;}
+	for(int i=0; i<particles.size()-1; i++) {
+		for(int j=i+1; j<particles.size(); j++) {
+			Vector force = particles[i].interaction(particles[j], container());
+			particles[i].force += force;
+			particles[j].force -= force;
+		}
+	}
+}
 
 template< typename ParticleClass, typename ContainerClass >
 std::ostream& operator<<(std::ostream& stream, 
@@ -214,21 +263,9 @@ std::ostream& operator<<(std::ostream& stream,
     return stream;
 };
 
-double minimum_image(double r1, double r2, double box_length) { /*
-    * Get the distance to the minimum image.
-    */
-    double half_length = box_length/2;
-    double dr = r1 - r2;
 
-    if (dr <= -half_length) {
-        return (r1 + box_length-r2);
 
-    } else if (dr <= half_length) {
-        return dr;
 
-    } else
-        return -(r2 + box_length-r1);
-}
 
 /*
 template < class ParticleClass >

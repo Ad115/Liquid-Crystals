@@ -63,6 +63,19 @@ class Vector {
             return result;
         }
 
+	Vector operator+=(const Vector& other){
+            for (int i=0; i<other.dimensions(); i++) 
+                (*this)[i] += other[i];
+	    return *this;
+	}
+
+	Vector operator-=(const Vector& other){
+            for (int i=0; i<other.dimensions(); i++) 
+                (*this)[i] -= other[i];
+	    return *this;
+	}
+
+
         friend std::ostream& operator<<(std::ostream& stream, const Vector& vector);
 };
 
@@ -81,5 +94,6 @@ Vector operator*(double r, const Vector& v) {
     }
     return result;
 }
+
 
 #endif

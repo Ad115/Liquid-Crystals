@@ -12,22 +12,20 @@ template< typename ParticleSystem >
 double temperature(ParticleSystem& system) { /*
     * Measure the temperature of the system (the sum of the particle's kinetic energies).
     */
-    auto measurements = system.measure_particles( 
-                            [](Particle& p) { return p.kinetic_energy(); } 
+    auto measurements = system.measure_particles( [n=system.n_particles()](Particle& p) { 
+					return 2./(3*n)*p.kinetic_energy(); 
+				} 
                         );
     return std::accumulate(std::begin(measurements), std::end(measurements), 0.);
 }
 
-void move_randomly(Particle& p) {
-    p.position = p.position + 0.05 * p.velocity;
-}
 
 
 int main( int argc, char **argv )
 {
-    int n_particles = 100;
+    int n_particles = 50;
     int dimensions = 3; 
-    double numeric_density = 1;
+    double numeric_density = .01;
 
     auto system = ParticleSystem<Particle, PeriodicBoundaryBox>(
                     n_particles, 
@@ -38,14 +36,10 @@ int main( int argc, char **argv )
 
     // Output initial positions to an XYZ file.
     std::ofstream outputf("output.xyz");
-    for (int i=0; i<200; i++) {
-        system.write_xyz( outputf );
-        system.map_to_particles(move_randomly);
-
-        system.map_to_particles([&system](Particle& p) {
-                p.position = system.container().apply_boundary_conditions(p.position);
-            }
-        );
+    for (int i=0; i<10000; i++) {
+	
+       if(i%10==0) system.write_xyz( outputf );
+	system.integrator(.005);
         
     }
 
