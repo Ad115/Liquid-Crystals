@@ -11,7 +11,7 @@
 int main( int argc, char **argv ) {
     int n_particles = 100;
     int dimensions = 3; 
-    double numeric_density = .001;
+    double numeric_density = .01;
 
     auto system = ParticleSystem<Particle, PeriodicBoundaryBox>(
                     n_particles, 
@@ -24,18 +24,25 @@ int main( int argc, char **argv ) {
     system.initialize_with(random_velocities{});
     system.initialize_with(set_temperature(1E3));
 
-    
 
-    // Output initial positions to an XYZ file.
     std::ofstream outputf("output.xyz");
-    for (int i=0; i<10000; i++) {
-    	system.initialize_with(set_temperature(1E2-i*1E-2));
-        if(i%10==0) system.write_xyz( outputf );
-        system.integrator(.0005);
+    set_temperature thermostat(0);
+    int simulation_steps = 100000;
+    int sampling_frecuency = 10;
+    double time_step = 0.0005;
+
+    // Simulation loop
+    for (int i=0; i<simulation_steps; i++) {
+
+        thermostat.setpoint += 5e-4;
+    	thermostat(system);
+
+        if(i%sampling_frecuency==0) system.write_xyz( outputf );
+        system.simulation_step(time_step);
         
     }
 
-    // Print the system's initial state
+    // Print the system's final state
     std::cout << system << std::endl;
 
     std::cout << "temperature: "

@@ -66,6 +66,9 @@ class ParticleSystem { /*
 
         void integrator(double dt);
 
+        void simulation_step(double dt);
+        
+
         template< typename T, typename O >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
         * To print the state of the system with:
@@ -96,8 +99,8 @@ class ParticleSystem { /*
         double minimum_image( double r1, double r2, double box_length );
 
         double distance( ParticleClass other_particle );
-	
-	void update_forces();
+    
+    void update_forces();
 };
 
 
@@ -210,38 +213,52 @@ void ParticleSystem<ParticleClass, ContainerClass>::write_xyz(std::ostream& stre
 };
 
 template< typename ParticleClass, typename ContainerClass >
-void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){
-        map_to_particles([dt, &box=container()](ParticleClass& p){
-			// r(t+dt) = r(t) + v(t)*dt + [1/2*f*dt^2]
-    			p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;
-                	p.position = box.apply_boundary_conditions(p.position);
-			
-			// v(t+dt/2) = v(t)+f(t)/2*dt
-			p.velocity = p.velocity + dt/2.*p.force;
+void ParticleSystem<ParticleClass, ContainerClass>::simulation_step(double time_step){ /*
+    * Advance the state of the system by the amount defined by the time_step.
+    */
+    (*this).integrator(time_step);
+}
 
-		}
-	);
-	
-	// r(t + dt) --> f(t + dt)
-	update_forces();
-	
-	map_to_particles([dt](ParticleClass& p){
-			// v(t+dt) = v(t+dt/2)+f(t+dt)/2*dt
-			p.velocity = p.velocity + dt/2.*p.force;
-		}
-	);
+template< typename ParticleClass, typename ContainerClass >
+void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){
+
+    // --- First integration half step
+    map_to_particles([dt, &box=container()](ParticleClass& p){
+
+            // r(t+dt) = r(t) + v(t)*dt + 1/2*f*dt^2
+            p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;
+            p.position = box.apply_boundary_conditions(p.position);
+
+            // v(t+dt/2) = v(t)+f(t)/2*dt
+            p.velocity = p.velocity + dt/2.*p.force;
+        }
+    );
+    
+    // r(t + dt) --> f(t + dt)
+    update_forces();
+    
+    // --- Second integration half step
+    map_to_particles([dt](ParticleClass& p){
+
+            // v(t+dt) = v(t+dt/2)+f(t+dt)/2*dt
+            p.velocity = p.velocity + dt/2.*p.force;
+        }
+    );
 }
 
 template< typename ParticleClass, typename ContainerClass >
 void ParticleSystem<ParticleClass, ContainerClass>::update_forces(){
-	for(auto& p : particles){p.force=0*p.force;}
-	for(int i=0; i<particles.size()-1; i++) {
-		for(int j=i+1; j<particles.size(); j++) {
-			Vector force = particles[i].interaction(particles[j], container());
-			particles[i].force += force;
-			particles[j].force -= force;
-		}
-	}
+
+    // First zero out the forces
+    for(auto& p : particles){ p.force = 0 * p.force; }
+
+    for(int i=0; i<particles.size()-1; i++) {
+        for(int j=i+1; j<particles.size(); j++) {
+            Vector force = particles[i].interaction(particles[j], container());
+            particles[i].force += force;
+            particles[j].force -= force;
+        }
+    }
 }
 
 template< typename ParticleClass, typename ContainerClass >

@@ -84,21 +84,28 @@ double temperature(ParticleSystem& system) { /*
 }
 
 class set_temperature {
-	double setpoint;
     public:
-	set_temperature(double setpoint):setpoint(setpoint){}
+
+        double setpoint;
+
+        set_temperature(double setpoint)
+         : setpoint(setpoint)
+         {}
+
         template< typename ParticleSystem>
         set_temperature& operator()(ParticleSystem& system) { 
-	double current_temperature=temperature(system);
+
+            double current_temperature=temperature(system);
+
             using Particle = typename ParticleSystem::Particle_t;
             system.map_to_particles(
-			    [scaling=sqrt(setpoint/current_temperature)](Particle& p)
-			    {p.velocity = scaling*p.velocity;});
-		
+                [scaling=sqrt(setpoint/current_temperature)](Particle& p){
+                    p.velocity = scaling*p.velocity;
+                }
+            );
 
             return *this;
         }
-
 };
 
 
