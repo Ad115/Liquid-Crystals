@@ -13,7 +13,7 @@ int main( int argc, char **argv ) {
     int dimensions = 3; 
     double numeric_density = .01;
 
-    auto system = ParticleSystem<Particle, PeriodicBoundaryBox>(
+    auto system = ParticleSystem<LennardJones, PeriodicBoundaryBox>(
                     n_particles, 
                     dimensions, 
                     numeric_density

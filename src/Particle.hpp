@@ -17,9 +17,6 @@ class Particle {
               velocity(dimensions),
               force(dimensions) {}
 
-        //Destructor
-        ~Particle() = default;
-
         unsigned dimensions() const { return position.dimensions(); }
 
         void set_position(const Vector& new_position) { position = new_position; }
@@ -29,6 +26,32 @@ class Particle {
             Vector& v = this->velocity;
             return 1/2. * (v*v);
         };
+
+        template<typename Container>
+        Vector force_law(const Particle& other, const Container& box);
+
+        friend std::ostream& operator<<(std::ostream& s, const Particle& p);
+
+};
+
+std::ostream& operator<<(std::ostream& stream,
+                         const Particle& p) {
+    stream << "{";
+    stream << "\"position\":" << p.position << ", ";
+    stream << "\"velocity\":" << p.velocity << ", ";
+    stream << "\"force\":" << p.force;
+    stream << "}";
+    return stream;
+}
+
+
+class LennardJones : public Particle {
+    public:
+
+        //Constructor
+        LennardJones( unsigned int dimensions )
+            : Particle(dimensions) 
+            {}
 
         template<typename Container>
         Vector force_law(const Particle& other, const Container& box ){ /*
@@ -52,22 +75,7 @@ class Particle {
 
             return f/r2 * dr;
         }
-
-        friend std::ostream& operator<<(std::ostream& s, const Particle& p);
-
 };
-
-
-std::ostream& operator<<(std::ostream& stream,
-                         const Particle& p) {
-    stream << "{";
-    stream << "\"position\":" << p.position << ", ";
-    stream << "\"velocity\":" << p.velocity << ", ";
-    stream << "\"force\":" << p.force;
-    stream << "}";
-    return stream;
-}
-
 
 
 
