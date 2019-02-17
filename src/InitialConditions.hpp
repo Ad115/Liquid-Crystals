@@ -2,42 +2,14 @@
 #define INITIAL_CONDITIONS_HEADER
 
 #include <cmath>
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <initializer_list>
 #include "Vector.hpp"
 
 
-template< typename ...IList > // <-- Base case, stops recursion with no parameters
-class InitialConditions {
-    public:
-        template< typename ParticleSystem >
-        void operator()(ParticleSystem& system) {}
-};
-
-template< typename Initializer, typename ...IList > // <-- Recursive case
-class InitialConditions<Initializer, IList...> {
-    public:
-
-        template< typename ParticleSystem >
-        void operator()(ParticleSystem& system) {
-
-            // Initialize with "Initializer" conditions
-            Initializer::initialize(system);
-
-            // Initialize with the remaining conditions
-            auto remaining_conditions = InitialConditions<IList...>(); // Create object
-            remaining_conditions(system); // Apply
-        }
-};
-
-
-class Initializer {
-    public:
-
-        template< typename ParticleSystem >
-        static Initializer initialize(ParticleSystem& system);
-};
-
-
-class SimpleCubicLattice : Initializer {
+class simple_cubic_lattice {
     
     unsigned dimensions;
     double L;
@@ -47,28 +19,29 @@ class SimpleCubicLattice : Initializer {
     public:
 
         template< typename ParticleSystem >
-        SimpleCubicLattice(const ParticleSystem& system) 
-            : dimensions(system.dimensions()),
-              L(system.container().side_length()),
-              cube_length( // No. of particles along every side of the cube
-                  ceil(pow(system.n_particles(), 1./system.dimensions())) 
+        void fetch_parameters_from(const ParticleSystem& system) {
+            dimensions = system.dimensions();
+            L = system.container().side_length();
+
+             // No. of particles along every side of the cube
+            cube_length = ceil(pow(system.n_particles(), 1./system.dimensions()));
                   // The lowest integer such that cube_length^DIMENSIONS >= n. 
                   // Think of a cube with side cube_length where all particles 
-                  // are evenly spaced on a simple grid.
-              )
-            {}
+                  // are evenly spaced on a simfunction ple grid.
+        } 
 
-        template< typename ParticleSystem >
-        static Initializer initialize(ParticleSystem& system) {
+        template< typename ParticleSystem>
+        simple_cubic_lattice& operator()(ParticleSystem& system) { 
+            fetch_parameters_from(system);
 
-            auto initializer = SimpleCubicLattice(system);
-            system.map_to_particles(initializer);
+            using Particle = typename ParticleSystem::Particle_t;
+            system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
 
-            return initializer;
+            return *this;
         }
 
         template< typename ParticleClass>
-        void operator()(ParticleClass& p) {
+        void particle_fn(ParticleClass& p) {
 
             Vector position(dimensions);
             for (int D=0; D<dimensions; D++) {
@@ -82,22 +55,23 @@ class SimpleCubicLattice : Initializer {
         }
 };
 
-class RandomVelocities : Initializer {
+class random_velocities {
 
     public:
-        template< typename ParticleSystem >
-        static Initializer initialize(ParticleSystem& system) { 
+        template< typename ParticleSystem>
+        random_velocities& operator()(ParticleSystem& system) { 
+            using Particle = typename ParticleSystem::Particle_t;
+            system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
 
-            auto initializer = RandomVelocities();
-            system.map_to_particles(initializer);
-
-            return initializer;  
+            return *this;
         }
 
         template< typename ParticleClass >
-        void operator()(ParticleClass& p) {
+        void particle_fn(ParticleClass& p) {
             p.set_velocity( Vector::random_unit(p.dimensions()) );
         }
 };
+
+
 
 #endif

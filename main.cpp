@@ -21,25 +21,30 @@ double temperature(ParticleSystem& system) { /*
 
 
 
-int main( int argc, char **argv )
-{
-    int n_particles = 50;
+int main( int argc, char **argv ) {
+    int n_particles = 500;
     int dimensions = 3; 
-    double numeric_density = .01;
+    double numeric_density = .001;
 
     auto system = ParticleSystem<Particle, PeriodicBoundaryBox>(
                     n_particles, 
                     dimensions, 
-                    numeric_density,
-                    InitialConditions<SimpleCubicLattice, RandomVelocities>()
+                    numeric_density
     );
+
+    // Apply initial conditions
+    system.initialize_with(simple_cubic_lattice{});
+    system.initialize_with(random_velocities{});
+    //system.initialize_with(initial_temperature(123.4));
+
+    
 
     // Output initial positions to an XYZ file.
     std::ofstream outputf("output.xyz");
-    for (int i=0; i<10000; i++) {
+    for (int i=0; i<5000; i++) {
 	
-       if(i%10==0) system.write_xyz( outputf );
-	system.integrator(.005);
+        if(i%10==0) system.write_xyz( outputf );
+        system.integrator(.0005);
         
     }
 

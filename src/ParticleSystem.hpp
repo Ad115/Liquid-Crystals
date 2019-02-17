@@ -26,12 +26,14 @@ class ParticleSystem { /*
         std::vector<ParticleClass> particles;        
 
     public:
-        template< typename Initializer >
+
+        using Particle_t = ParticleClass;
+        using Container_t = ContainerClass;
+
         ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [2 or 3]
-                double numeric_density, // no. of particles / unit volume
-                Initializer initial_conditions // Sets initial conditions
+                double numeric_density // no. of particles / unit volume
         );
         ~ParticleSystem() = default;
 
@@ -45,7 +47,10 @@ class ParticleSystem { /*
         * The space in which the particles interact.
         */
 
-	ContainerClass& container();
+        ContainerClass& container();
+
+        template<typename Initializer>
+        Initializer initialize_with(Initializer initializer);
 
         template< typename ParticleFunction >
         ParticleFunction map_to_particles(ParticleFunction particle_fn); /*
@@ -59,7 +64,7 @@ class ParticleSystem { /*
         * Returns a vector of the measurements for each particle.
         */
 
-	void integrator(double dt);
+        void integrator(double dt);
 
         template< typename T, typename O >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
@@ -102,17 +107,14 @@ class ParticleSystem { /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 template< typename ParticleClass, typename ContainerClass >
-template< typename Initializer >
 ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [MAX=3]   
-                double numeric_density, // Initial numeric density (particles/volume)
-                Initializer set_initial_conditions
+                double numeric_density // Initial numeric density (particles/volume)
     )
     : particles(n_particles, ParticleClass(dimensions)),
       _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {
 
-    set_initial_conditions(*this);
 };
 
 
@@ -170,6 +172,14 @@ ContainerClass& ParticleSystem<ParticleClass, ContainerClass>::container() { /*
         * The space in which the particles interact.
         */
         return _container;
+}
+
+template < typename ParticleClass, typename ContainerClass >
+template< typename Initializer >
+Initializer ParticleSystem<ParticleClass, ContainerClass>::initialize_with(
+            Initializer initializer) {
+        initializer(*this);
+        return initializer;
 }
 
 
