@@ -67,7 +67,7 @@ class SimpleCubicLattice : Initializer {
             return initializer;
         }
 
-        template< typename ParticleClass >
+        template< typename ParticleClass>
         void operator()(ParticleClass& p) {
 
             Vector position(dimensions);

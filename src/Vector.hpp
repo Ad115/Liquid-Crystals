@@ -25,7 +25,7 @@ class Vector {
             Vector result(dimensions);
 
             for (int D=0; D<dimensions; D++)
-                result[D] = random_uniform();
+                result[D] = 2*(0.5 - random_uniform());
 
             return result;
         }
@@ -72,6 +72,14 @@ std::ostream& operator<<(std::ostream& stream, const Vector& v) {
               std::ostream_iterator<double>(stream, ", "));
     stream << v.vector.back() << ']';
     return stream;
+}
+
+Vector operator*(double r, const Vector& v) {
+    Vector result(v);
+    for (int i=0; i<v.dimensions(); i++) {
+        result[i] *= r;
+    }
+    return result;
 }
 
 #endif

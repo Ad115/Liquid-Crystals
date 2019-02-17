@@ -16,13 +16,13 @@
 
 
 /* Local joke: Camel Case xD */
-template< typename ParticleClass >
+template< typename ParticleClass, typename ContainerClass >
 class ParticleSystem { /*
     * The main class. Handles the particles vector and the container in which 
     * the simulation develops.
     */
     private:
-        Container _container;
+        ContainerClass _container;
         std::vector<ParticleClass> particles;        
 
     public:
@@ -41,7 +41,7 @@ class ParticleSystem { /*
         unsigned n_particles() const; /*
         * The number of particles in the system.
         */
-        const Container& container() const; /*
+        const ContainerClass& container() const; /*
         * The space in which the particles interact.
         */
 
@@ -57,8 +57,8 @@ class ParticleSystem { /*
         * Returns a vector of the measurements for each particle.
         */
 
-        template< typename T >
-        friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T>&); /*
+        template< typename T, typename O >
+        friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
         * To print the state of the system with:
         *   
         *   std::cout << system;
@@ -69,7 +69,7 @@ class ParticleSystem { /*
         *    "particles": [{...particle info...}, {...}, ...] }
         */
 
-        void write_xyz(std::ostream&&); /*
+        void write_xyz(std::ostream&); /*
         * Output the positions of the particles in the XYZ format.
         * The format consists in a line with the number of particles,
         * then a comment line followed by the space-separated coordinates 
@@ -95,9 +95,9 @@ class ParticleSystem { /*
     Part II: IMPLEMENTATION
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-template< typename ParticleClass >
+template< typename ParticleClass, typename ContainerClass >
 template< typename Initializer >
-ParticleSystem<ParticleClass>::ParticleSystem( 
+ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [MAX=3]   
                 double numeric_density, // Initial numeric density (particles/volume)
@@ -110,9 +110,9 @@ ParticleSystem<ParticleClass>::ParticleSystem(
 };
 
 
-template< typename ParticleClass >
+template< typename ParticleClass, typename ContainerClass >
 template< typename ParticleFunction >
-ParticleFunction ParticleSystem<ParticleClass>::map_to_particles(
+ParticleFunction ParticleSystem<ParticleClass, ContainerClass>::map_to_particles(
             ParticleFunction particle_fn) { /*
         * Map the given function to the particles. 
         * Useful for initialization.
@@ -121,9 +121,9 @@ ParticleFunction ParticleSystem<ParticleClass>::map_to_particles(
 };
 
 
-template< typename ParticleClass >
+template< typename ParticleClass, typename ContainerClass >
 template< typename Value, typename ParticleFunction >
-std::vector<Value> ParticleSystem<ParticleClass>::measure_particles(
+std::vector<Value> ParticleSystem<ParticleClass, ContainerClass>::measure_particles(
         ParticleFunction measure_fn) { /*
     * Measure some property of the particles. 
     * Returns a vector of the measurements for each particle.
@@ -138,29 +138,29 @@ std::vector<Value> ParticleSystem<ParticleClass>::measure_particles(
     return measurements;
 };
 
-template <typename ParticleClass>
-unsigned ParticleSystem<ParticleClass>::dimensions() const { /*
+template < typename ParticleClass, typename ContainerClass >
+unsigned ParticleSystem<ParticleClass, ContainerClass>::dimensions() const { /*
         * Getter for the dimensionality of the system.
         */
         return container().dimensions();
 }
 
-template <typename ParticleClass>
-unsigned ParticleSystem<ParticleClass>::n_particles() const { /*
+template < typename ParticleClass, typename ContainerClass >
+unsigned ParticleSystem<ParticleClass, ContainerClass>::n_particles() const { /*
         * The number of particles in the system.
         */
         return particles.size();
 }
 
-template <typename ParticleClass>
-const Container& ParticleSystem<ParticleClass>::container() const { /*
+template < typename ParticleClass, typename ContainerClass >
+const ContainerClass& ParticleSystem<ParticleClass, ContainerClass>::container() const { /*
         * The space in which the particles interact.
         */
         return _container;
 }
 
-template <typename ParticleClass>
-void ParticleSystem<ParticleClass>::write_xyz(std::ostream&& stream) { /*
+template < typename ParticleClass, typename ContainerClass >
+void ParticleSystem<ParticleClass, ContainerClass>::write_xyz(std::ostream& stream) { /*
         * Output the positions of the particles in the XYZ format.
         * The format consists in a line with the number of particles,
         * then a comment line followed by the space-separated coordinates 
@@ -185,9 +185,9 @@ void ParticleSystem<ParticleClass>::write_xyz(std::ostream&& stream) { /*
     return;
 };
 
-template< typename ParticleClass >
+template< typename ParticleClass, typename ContainerClass >
 std::ostream& operator<<(std::ostream& stream, 
-                         const ParticleSystem<ParticleClass>& sys) { /*
+                         const ParticleSystem<ParticleClass, ContainerClass>& sys) { /*
     * To print the state of the system with:
     *   
     *   std::cout << system;
