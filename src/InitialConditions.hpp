@@ -10,6 +10,49 @@
 #include "Vector.hpp"
 
 
+template< typename ...IList > // <-- Base case, stops recursion with no parameters
+class InitialConditions {
+    public:
+
+        template< typename ParticleSystem >
+        void operator()(ParticleSystem& system) {}
+};
+
+template< typename Initializer, typename ...IList > // <-- Recursive case
+class InitialConditions<Initializer, IList...> {
+
+    Initializer first;
+    InitialConditions<IList...> remaining;
+
+    public:
+
+        InitialConditions(Initializer initializer, IList ...p)
+         : first(initializer),
+           remaining(p...)
+         {}
+
+        
+
+        template< typename ParticleSystem >
+        void operator()(ParticleSystem& system) {
+
+            // Initialize with "first"
+            first(system);
+
+            // Initialize with the remaining conditions
+            remaining(system);
+        }
+    
+
+};
+
+template< typename Initializer, typename ...IList >
+InitialConditions<Initializer, IList...> 
+        initial_conditions(Initializer first, IList ...rest) {
+    return InitialConditions<Initializer, IList...>{first, rest...};
+}
+
+
 class simple_cubic_lattice {
     
     unsigned dimensions;
@@ -48,7 +91,9 @@ class simple_cubic_lattice {
                 // Get position in a hypercube with volume = cube_length^DIMENSIONS.
                 position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
                 // Rescale to a box of volume = L^DIMENSIONS
-                position[D] *= (L/cube_length)*0.75;
+                position[D] *= (L/cube_length)*0.9; // The 0.9 factor is for safety,
+                                                    // particles on the edges aren't
+                                                    // too close.
             }
             p.set_position(position);
             particle_idx++;
@@ -71,31 +116,35 @@ class random_velocities {
 };
 
 
-template< typename ParticleSystem >
-double temperature(ParticleSystem& system) { /*
-    * Measure the temperature of the system (the sum of the particle's kinetic energies).
-    */
-    auto measurements = system.measure_particles( 
-                            [n=system.n_particles()](Particle& p) { 
-					            return 2./(3*n)*p.kinetic_energy(); 
-				            } 
-                        );
-    return std::accumulate(std::begin(measurements), std::end(measurements), 0.);
-}
-
-class set_temperature {
+class temperature {
     public:
 
         double setpoint;
 
-        set_temperature(double setpoint)
+        template< typename ParticleSystem >
+        static double measure(ParticleSystem& system) { /*
+            * Measure the temperature of the system (the sum of the particle's 
+            * kinetic energies).
+            */
+            auto measurements = system.measure_particles( 
+                                    [n=system.n_particles()](Particle& p) { 
+                                        return 2./(3*n)*p.kinetic_energy(); 
+                                    } 
+                                );
+            return std::accumulate(std::begin(measurements), 
+                                   std::end(measurements), 
+                                   0.
+                    );
+        }
+
+        temperature(double setpoint)
          : setpoint(setpoint)
          {}
 
         template< typename ParticleSystem>
         void operator()(ParticleSystem& system) { 
 
-            double current_temperature = temperature(system);
+            double current_temperature = measure(system);
             double correction_factor = sqrt(setpoint / current_temperature);
 
             using Particle = typename ParticleSystem::Particle_t;

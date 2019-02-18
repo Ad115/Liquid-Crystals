@@ -35,6 +35,15 @@ class ParticleSystem { /*
                 int dimensions, // Dimensionality of the system [2 or 3]
                 double numeric_density // no. of particles / unit volume
         );
+
+        template< typename Initializer >
+        ParticleSystem( 
+                int n_particles, // Number of particles to create
+                int dimensions, // Dimensionality of the system [MAX=3]   
+                double numeric_density, // Initial numeric density (particles/volume)
+                Initializer initial_conditions // Set the initial state of the system
+        );
+
         ~ParticleSystem() = default;
 
         unsigned dimensions() const; /*
@@ -128,8 +137,24 @@ ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem(
                 double numeric_density // Initial numeric density (particles/volume)
     )
     : particles(n_particles, ParticleClass(dimensions)),
-      _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {
+      _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) 
+    {};
 
+template< typename ParticleClass, typename ContainerClass >
+template< typename Initializer >
+ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem( 
+                int n_particles, // Number of particles to create
+                int dimensions, // Dimensionality of the system [MAX=3]   
+                double numeric_density, // Initial numeric density (particles/volume)
+                Initializer initial_conditions // Set the initial state of the system
+    )
+    : ParticleSystem<ParticleClass, ContainerClass>(
+            n_particles, 
+            dimensions, 
+            numeric_density
+      ) {
+
+    (*this).apply(initial_conditions);
 };
 
 
