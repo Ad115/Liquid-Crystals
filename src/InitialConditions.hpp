@@ -143,7 +143,7 @@ class temperature {
 
         template< typename ParticleSystem>
         void operator()(ParticleSystem& system) { 
-
+            
             double current_temperature = measure(system);
             double correction_factor = sqrt(setpoint / current_temperature);
 

@@ -18,7 +18,7 @@ int main( int argc, char **argv ) {
                     n_particles, 
                     dimensions, 
                     numeric_density,
-                    initial_conditions(
+                    initial_conditions( // Initialized in the given order!
                         simple_cubic_lattice{},
                         random_velocities{},
                         temperature{thermostat.setpoint}
