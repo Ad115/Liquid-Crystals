@@ -7,6 +7,7 @@
 #include <iterator>
 #include <algorithm>
 #include "Container.hpp"
+#include "Simulation.h"
 
 
 /*  
@@ -90,6 +91,12 @@ class ParticleSystem { /*
         * Advance the state of the system by the amount defined by the time_step.
         */
 
+        Simulation<ParticleSystem<ParticleClass, ContainerClass>> 
+                simulation(unsigned simulation_steps, double dt); /*
+        * Create an object that handles the simulation and allows to specify 
+        * functions to take samples the system and perform actions at each step.
+        */
+
         template< typename T, typename O >
         friend std::ostream& operator<<(std::ostream&, const ParticleSystem<T,O>&); /*
         * To print the state of the system with:
@@ -145,7 +152,7 @@ template< typename Initializer >
 ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem( 
                 int n_particles, // Number of particles to create
                 int dimensions, // Dimensionality of the system [MAX=3]   
-                double numeric_density, // Initial numeric density (particles/volume)
+                double numeric_density, // Initial numeric density (particles/volume)Simulation<ParticleSystem<ParticleClass, ContainerClass>>
                 Initializer initial_conditions // Set the initial state of the system
     )
     : ParticleSystem<ParticleClass, ContainerClass>(
@@ -251,6 +258,15 @@ void ParticleSystem<ParticleClass, ContainerClass>::write_xyz(std::ostream& stre
 
     return;
 };
+
+template< typename ParticleClass, typename ContainerClass >
+Simulation<ParticleSystem<ParticleClass, ContainerClass>>
+    ParticleSystem<ParticleClass, ContainerClass>::simulation(unsigned steps, double dt) { /*
+    * Create an object that handles the simulation and allows to specify 
+    * functions to take samples the system and perform actions at each step.
+    */
+    return Simulation<ParticleSystem<ParticleClass, ContainerClass>>{*this, steps, dt};
+}
 
 template< typename ParticleClass, typename ContainerClass >
 void ParticleSystem<ParticleClass, ContainerClass>::simulation_step(double time_step){ /*

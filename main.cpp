@@ -28,19 +28,21 @@ int main( int argc, char **argv ) {
 
     std::ofstream outputf("output.xyz");
     int simulation_steps = 2000;
-    int sampling_frecuency = 5;
+    int sampling_period = 0.05;
     double time_step = 0.01;
 
     // Simulation loop
-    for (int i=0; i<simulation_steps; i++) {
+    system.simulation(simulation_steps, time_step)
 
-        if(i%sampling_frecuency==0) system.write_xyz( outputf );
+            .at_each_step([&]() { // <-- Execute this code after each step of the simulation
+                    thermostat.setpoint += 5e-4;
+                    system.apply(thermostat);
+            })
 
-        system.simulation_step(time_step);
-
-        thermostat.setpoint += 5e-4;
-    	system.apply(thermostat);
-    }
+            .take_samples(sampling_period, [&]() { // <-- Execute this code in intervals of
+                    system.write_xyz(outputf);     //  "sampling_period" (first sample at t=0) 
+            })
+    .run();
 
     // Print the system's final state
     std::cout << system << std::endl;
