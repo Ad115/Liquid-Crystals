@@ -19,7 +19,7 @@ class Container {
         friend std::ostream& operator<<(std::ostream&, const Container&);
 
         Vector apply_boundary_conditions(const Vector& position) const;
-        Vector minimum_image(const Vector& p1, const Vector& p2) const;
+        Vector distance_vector(const Vector& p1, const Vector& p2) const;
 
 };
 
@@ -40,7 +40,7 @@ class PeriodicBoundaryBox : public Container {
         return new_pos;
     }
 
-    Vector minimum_image(const Vector& r1, const Vector& r2) const { /*
+    Vector distance_vector(const Vector& r1, const Vector& r2) const { /*
         * Get the distance to the minimum image.
         */
         double half_length = side_length()/2;

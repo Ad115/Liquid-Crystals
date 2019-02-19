@@ -31,6 +31,7 @@ int main( int argc, char **argv ) {
     int sampling_period = 0.05;
     double time_step = 0.01;
 
+
     // Simulation loop
     system.simulation(simulation_steps, time_step)
 
@@ -43,6 +44,7 @@ int main( int argc, char **argv ) {
                     system.write_xyz(outputf);     //  "sampling_period" (first sample at t=0) 
             })
     .run();
+
 
     // Print the system's final state
     std::cout << system << std::endl;

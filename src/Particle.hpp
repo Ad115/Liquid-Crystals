@@ -62,7 +62,7 @@ class LennardJones : public Particle {
             * 
             * See: http://www.pages.drexel.edu/~cfa22/msim/node26.html
             */
-            Vector dr = box.minimum_image((*this).position, other.position);
+            Vector dr = box.distance_vector((*this).position, other.position);
             double r2=1./(dr*dr);
             double rcut=3.5;
 
