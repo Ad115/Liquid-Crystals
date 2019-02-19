@@ -22,6 +22,7 @@ int main( int argc, char **argv ) {
                         simple_cubic_lattice{},
                         random_velocities{},
                         temperature{thermostat.setpoint}
+                        // Insert more conditions here as you please ...
                     )
     );
 
