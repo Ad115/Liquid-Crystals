@@ -7,6 +7,12 @@
 #include "src/InitialConditions.hpp"
 
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
+/*El arreglo se adapta tanto al tamaño de la llave como a la cantidad de devices
+   para asi obtener un comun multiplo de ambos
+
+*Super formula nextInt = (cM - (N % cM)) + N;
+<<El comun multiplo esta dado por cM = (N * CuantosCachos)>>
+*/
 
 int main( int argc, char **argv ) {
     int n_particles = 100;
@@ -54,3 +60,7 @@ int main( int argc, char **argv ) {
               << temperature::measure(system)
               << std::endl;
 }
+
+
+
+
