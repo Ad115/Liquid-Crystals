@@ -1,0 +1,7 @@
+main.cu(141): error: identifier "PositionInitializer" is undefined
+
+main.cu(130): warning: variable "ff" was declared but never referenced
+
+main.cu(147): warning: variable "i" was declared but never referenced
+
+1 error detected in the compilation of "/tmp/tmpxft_00007a43_00000000-8_main.cpp1.ii".
