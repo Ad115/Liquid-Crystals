@@ -1,4 +1,4 @@
-Attempts to creat a version in CUDA!!!
+Attempts to create a working version in CUDA!!!
 ========================
 
 ## Compilation
@@ -9,8 +9,8 @@ You can try it on: https://colab.research.google.com/drive/1zZuwdMKnG41vZfTANDp-
 
 ## Screenshots
 
-Wait a minute, it isn't ready yet, so no screenshots, but just for inspiration, 
-here are the ones from the pure C++ version :)
+Wait a minute, it isn't ready yet so no screenshots :( but just for inspiration 
+here are ones that reflect what we expect :)
 
 ![Ovito 20 particles](ovito-20.png)
 ![Ovito 100 particles](ovito-100.png)

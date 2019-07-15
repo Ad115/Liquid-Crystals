@@ -1,9 +1,18 @@
+/* 
+## Clase `Vector`
+Esta clase representa en realidad un array (por default su tamaño es 3 y de 
+tipo double).
+
+Las anotaciones "`__host__ __device__` " permiten que este vector pueda existir 
+en el CPU(host) o en el GPU(device). 
+
+Esta clase quedó básicamente como ya la teníamos, con cambios menores. 
+*/
+
 #ifndef VECTOR_HEADER
 #define VECTOR_HEADER
 
-#include <vector>
 #include <iostream>
-#include <iterator>
 #include <initializer_list>
 
 template<int Size=3, typename Type=double>
@@ -13,13 +22,12 @@ class Vector {
         Type vector[Size];
 
     public:
+    
+    static constexpr int dimensions = Size;
 
     template <typename... T>
     __host__ __device__ 
     Vector(T ...entries) : vector{entries...} {}
-
-    __host__ __device__ 
-    unsigned dimensions() const { return Size; }
 
     __host__ __device__ 
     double& operator[](int index) { return vector[index]; }
@@ -58,7 +66,7 @@ class Vector {
         * (v1 - v2)[i] == v1[i] - v2[i]
         */
         Vector<Size, Type> result(*this);
-        result += other;
+        result -= other;
 
         return result;
     }
@@ -81,10 +89,10 @@ class Vector {
         const Vector<Size, Type>& vector) {
 
         stream << '[';
-        for (int i=0; i < vector.dimensions()-1; i++)
+        for (int i=0; i < Size-1; i++)
             stream << vector[i] << ", ";
                     
-        stream << vector[vector.dimensions()-1] << ']';
+        stream << vector[Size-1] << ']';
         return stream;
     }
 };

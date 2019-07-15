@@ -1,7 +1,21 @@
+/* 
+## Clase `ParticleSystem`
+
+Esta clase está diseñada para manejarse desde el Host(CPU), lo importante es que 
+contiene un `thrust::device_vector` de partículas, por lo que estas viven 
+completamente en el GPU y de ahí se operan. A su vez, el `Container` forma parte 
+de un `device_obj`, por lo que reside también completamente en el device.  El 
+`kernel` es un integrador muy simple donde cada partícula tiene su propio hilo. 
+Falta algo para calcular la fuerza, esto probablemente se podrá hacer con otro 
+kernel. 
+*/
+
 #include <thrust/device_vector.h>
 
 #include "Particle.cu"
 #include "Vector.cu"
+#include "Container.cu"
+#include "device_obj.cu"
 
 
 // This is the kernel that is launched from CPU and GPU runs it for each cell
@@ -17,12 +31,17 @@ template< typename ParticleT=Particle<> >
 class ParticleSystem
 {
     unsigned int n_particles;
-    thrust::device_vector<ParticleT> particles;
+    thrust::device_vector< ParticleT > particles;
+    device_obj< PeriodicBoundaryBox<> > box;
 
   public:
-    ParticleSystem(unsigned int n) 
+    
+    static constexpr int dimensions = ParticleT::dimensions;
+    
+    ParticleSystem(unsigned int n, double numeric_density) 
         : n_particles{n},
-          particles{thrust::device_vector<ParticleT>(n)} {};
+          particles{thrust::device_vector<ParticleT>(n)},
+          box{pow(n/numeric_density, 1./dimensions)} {};
 
     void simulation_step() {
         // As we cannot send device vectors to the kernel (as device_vector is at
@@ -56,6 +75,10 @@ class ParticleSystem
     }
 
     void print() {
+        printf("Container: \n\t");
+        print_container(box.raw_ptr());
+        printf("\n");
+        
         thrust::host_vector<ParticleT> p(particles);
 
         printf("Particles: \n");

@@ -1,9 +1,28 @@
+/* 
+El siguiente código es para probar que la clase vector funciona correctamente, 
+sobre todo en el GPU(device) 
+
+Para compilar y ejecutar:
+```
+nvcc test_Vector.cu -o test_Vector
+./test_Vector
+```
+
+Salida esperada:
+```
+[0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00]
+[0.00, 1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00, 8.00, 9.00]
+[7.00, 7.00, 7.00]
+Vector size: 3
+```
+*/
+
 #include "src/Vector.cu"
 
 /* Init the vector object in the device */
 template <int Size, typename T>
 __global__ void init_vector_seq(Vector<Size,T> *ptr) {
-    for (int i=0; i<Size; i++) {
+    for (int i=0; i < (*ptr).dimensions; i++) {
         (*ptr)[i] = i;
     }
 }
@@ -13,6 +32,8 @@ __global__
 void operate_on_vectors_device(Vector<Size,T> *v1, Vector<Size,T> *v2) {
     auto sum = 2*(3+*v1) + (1+(*v2));
     print_vector(&sum);
+    printf("\n");
+    printf("Vector size: %d", Vector<Size,T>::dimensions);
 }
 
 
