@@ -11,6 +11,7 @@ kernel.
 */
 
 #include <thrust/device_vector.h>
+#include <thrust/random.h>
 
 #include "Particle.cu"
 #include "Vector.cu"
@@ -18,14 +19,63 @@ kernel.
 #include "device_obj.cu"
 
 
+// seed a random number generator
+
 // This is the kernel that is launched from CPU and GPU runs it for each cell
-template <typename ParticleT>
+template <typename VectorT>
 __global__ 
-void kernel(ParticleT *particles, int n) {
+void integrator_kernel(Particle<VectorT> *particles, int n, int step) {
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n)
-        particles[index].position += 0.5;
+    if (index < n){
+        
+          thrust::default_random_engine rng(index*step + step*1000);
+          rng.discard(index);
+
+          // create a mapping from random numbers to [0,1)
+          thrust::normal_distribution<float> dist(0, 1);
+
+          // Create a random motion vector                                                    
+          VectorT delta;
+          for (int i=0; i<delta.dimensions; i++) {
+              float rnd_value = dist(rng);
+              delta[i] = rnd_value;
+              // printf("Random value: %f \n", rnd_value);
+          }
+                                                      
+        particles[index].position += delta;   
+                                                      
+        // printf("Index = %d\n", index);
+        
+    }
 }
+
+                                                      
+template <typename VectorT>
+__global__                                                       
+void init_kernel(Particle<VectorT> *particles, int n) {
+    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (index < n){
+        
+          thrust::default_random_engine rng(index);
+          rng.discard(index);
+
+          // create a mapping from random numbers to [0,1)
+          thrust::normal_distribution<float> dist(0, 1);
+
+          // Create a random motion vector                                                    
+          VectorT delta;
+          for (int i=0; i<delta.dimensions; i++) {
+              float rnd_value = dist(rng);
+              delta[i] = rnd_value;
+              // printf("Random value: %f \n", rnd_value);
+          }
+                                                      
+        particles[index].position += delta;   
+                                                      
+        // printf("Index = %d\n", index);
+        
+    }
+}                                                      
 
 template< typename ParticleT=Particle<> >
 class ParticleSystem
@@ -43,11 +93,12 @@ class ParticleSystem
           particles{thrust::device_vector<ParticleT>(n)},
           box{pow(n/numeric_density, 1./dimensions)} {};
 
-    void simulation_step() {
+    void simulation_step(int step) {
         // As we cannot send device vectors to the kernel (as device_vector is at
         // the end of the day a GPU structure abstraction in CPU) we have to get the
         // pointer in GPU memory in order for the kernel to know where to start 
         // reading the particle array from.
+        
         ParticleT* particles_ptr = thrust::raw_pointer_cast(particles.data());
       
         /* This is the way I structured my blocks and threads. I fixed the amount of
@@ -62,6 +113,7 @@ class ParticleSystem
          * │ └───┴───┴───────┴──────┘  │ └───┴───┴───────┴──────┘ │
          * └───────────────────────────┴──────────────────────────┴──────────
          */
+        
         unsigned int block_size = 1024;
         unsigned int grid_size = n_particles / block_size + 1;
       
@@ -71,7 +123,20 @@ class ParticleSystem
         // pointer) and pass it to the kernel. No need to copy back, we can read from
         // the device vector with the ::operator[]() i.e. positions[2] and that would
         // do all the memory copying for us!
-        kernel<<<grid_size,block_size>>>(particles_ptr, n_particles);
+        
+        integrator_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, step);
+    }
+    
+    void simulation_init() {
+        
+        ParticleT* particles_ptr = thrust::raw_pointer_cast(particles.data());
+
+        unsigned int block_size = 1024;
+        unsigned int grid_size = n_particles / block_size + 1;
+        
+        init_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles);
+
+        
     }
 
     void print() {
