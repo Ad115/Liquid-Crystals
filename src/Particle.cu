@@ -64,6 +64,10 @@ template< typename VectorT=Vector<> >
 class LennardJones: public Particle<VectorT>{
 
 public:
+
+    using vector_t = VectorT;
+    static constexpr int dimensions = VectorT::dimensions;
+
         template< typename ContainerT >
         __host__ __device__
         VectorT force_law(LennardJones *other, ContainerT *box ){ /*
