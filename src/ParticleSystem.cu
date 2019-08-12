@@ -134,7 +134,7 @@ class ParticleSystem
     
     using particle_type = ParticleT;
     using container_type = ContainerT;
-    using vector_type = ParticleT::vector_type;
+    using vector_type = typename ParticleT::vector_type;
     static constexpr int dimensions = ParticleT::dimensions;
     
     ParticleSystem(unsigned int n, double numeric_density) 
