@@ -22,7 +22,8 @@ class Vector {
         Type vector[Size];
 
     public:
-    
+
+    using value_type = Type;    
     static constexpr int dimensions = Size;
 
     template <typename... T>

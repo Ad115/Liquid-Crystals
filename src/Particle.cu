@@ -14,6 +14,7 @@ template< typename VectorT=Vector<> >
 class Particle {
     public:
         
+        using vector_t = VectorT;
         static constexpr int dimensions = VectorT::dimensions;
         
         VectorT position;
@@ -31,7 +32,7 @@ class Particle {
 
         __host__ __device__
         double kinetic_energy() {
-            Vector<>& v = velocity;
+            auto& v = velocity;
             return 1/2. * (v*v);
         }
 };

@@ -17,6 +17,7 @@ class Container {
     private:
 
     public:
+        using vector_type = VectorT;
         static constexpr int dimensions = VectorT::dimensions;
 
         __host__ __device__ 
@@ -32,8 +33,6 @@ class PeriodicBoundaryBox : public Container<VectorT> {
     double side_length;
 
     public: 
-
-    static constexpr int dimensions = VectorT::dimensions;
 
     __host__ __device__ PeriodicBoundaryBox( double L )
             : side_length(L) {}

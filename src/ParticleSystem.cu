@@ -83,14 +83,14 @@ __device__ double atomicAddDouble(double* address, double val)
 
 
 // This is the kernel that is launched from CPU and GPU runs it for each cell
-template <typename ParticleT>
+template <typename ParticleT, typename ContainerT>
 __global__ 
-void integrator_kernel(ParticleT *particles,  PeriodicBoundaryBox<> *box, unsigned int n, int step) {
+void integrator_kernel(ParticleT *particles,  ContainerT *box, unsigned int n, int step) {
     unsigned int row = gridDim.x;
     unsigned int column = blockIdx.y * blockDim.y + threadIdx.x;
 
     if( column > row && column < n ){
-        Vector<> force = particles[row].force_law(&particles[column], box);
+        auto force = particles[row].force_law(&particles[column], box);
         for( int i=0; i<force.dimensions; ++i ){
             atomicAddDouble( &particles[row].force[i], force[i] );
             atomicAddDouble( &particles[column].force[i], - force[i] );
@@ -98,9 +98,9 @@ void integrator_kernel(ParticleT *particles,  PeriodicBoundaryBox<> *box, unsign
     }
 }
                                                       
-template <typename VectorT>
+template <typename ParticleT>
 __global__                                                       
-void init_kernel(Particle<VectorT> *particles, int n) {
+void init_kernel(ParticleT *particles, int n) {
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
     if (index < n){
         
@@ -108,32 +108,33 @@ void init_kernel(Particle<VectorT> *particles, int n) {
           rng.discard(index);
 
           // create a mapping from random numbers to [0,1)
-          thrust::normal_distribution<float> dist(0, 1);
+          thrust::normal_distribution<double> dist(0, 1);
 
-          // Create a random motion vector                                                    
-          VectorT delta;
+          // Create a random motion vector
+          using vector_type = ParticleT::vector_type;
+          vector_type delta;
+
           for (int i=0; i<delta.dimensions; i++) {
               float rnd_value = dist(rng);
               delta[i] = rnd_value;
-              // printf("Random value: %f \n", rnd_value);
           }
-                                                      
-        particles[index].position += delta;   
-                                                      
-        // printf("Index = %d\n", index);
-        
+
+        particles[index].position = delta;
     }
 }                                                      
 
-template< typename ParticleT=Particle<>>
+template< typename ParticleT=Particle<>, typename ContainerT=PeriodicBoundaryBox<> >
 class ParticleSystem
 {
     unsigned int n_particles;
     thrust::device_vector< ParticleT > particles;
-    device_obj< PeriodicBoundaryBox<> > box;
+    device_obj< ContainerT > box;
 
   public:
     
+    using particle_type = ParticleT;
+    using container_type = ContainerT;
+    using vector_type = ParticleT::vector_type;
     static constexpr int dimensions = ParticleT::dimensions;
     
     ParticleSystem(unsigned int n, double numeric_density) 
@@ -148,6 +149,7 @@ class ParticleSystem
         // reading the particle array from.
         
         ParticleT* particles_ptr = thrust::raw_pointer_cast(particles.data());
+        ContainerT* box_ptr = box.device_ptr();
       
         /* This is the way I structured my blocks and threads. I fixed the amount of
          * threads per block to 1024. So to get the amount of blocks we just get the
@@ -172,7 +174,7 @@ class ParticleSystem
         // the device vector with the ::operator[]() i.e. positions[2] and that would
         // do all the memory copying for us!
         
-        integrator_kernel<<<grid_size,block_size>>>(particles_ptr, box.device_ptr(), n_particles, step);
+        integrator_kernel<<<grid_size,block_size>>>(particles_ptr, box_ptr, n_particles, step);
     }
     
     void simulation_init() {
@@ -183,8 +185,6 @@ class ParticleSystem
         unsigned int grid_size = n_particles / block_size + 1;
         
         init_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles);
-
-        
     }
 
     void print() {
