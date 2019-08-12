@@ -40,7 +40,8 @@ Particles:
 ```
 */
 
-#include "src/ParticleSystem_init.cu"
+#include "src/ParticleSystem.cu"
+#include "src/Particle.cu"
 
 int main(void)
 {
@@ -48,7 +49,7 @@ int main(void)
   double numeric_density = 0.01;
   int steps = 10;    // understand it as "frames", how many steps in time
 
-  ParticleSystem<> sys(n_particles, numeric_density);
+  ParticleSystem<LennardJones<PeriodicBoundaryBox<> >> sys(n_particles, numeric_density);
     
   sys.simulation_init();
   sys.print();

@@ -20,35 +20,83 @@ kernel.
 
 
 // seed a random number generator
-
+/*
 // This is the kernel that is launched from CPU and GPU runs it for each cell
 template <typename VectorT>
 __global__ 
 void integrator_kernel(Particle<VectorT> *particles, int n, int step) {
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n){
-        
-          thrust::default_random_engine rng(index*step + step*1000);
-          rng.discard(index);
+   
 
-          // create a mapping from random numbers to [0,1)
-          thrust::normal_distribution<float> dist(0, 1);
+    // --- First half step ---
+    map_to_particles([dt, &box=container()](ParticleClass& p){
 
-          // Create a random motion vector                                                    
-          VectorT delta;
-          for (int i=0; i<delta.dimensions; i++) {
-              float rnd_value = dist(rng);
-              delta[i] = rnd_value;
-              // printf("Random value: %f \n", rnd_value);
-          }
-                                                      
-        particles[index].position += delta;   
-                                                      
-        // printf("Index = %d\n", index);
-        
+            // r(t+dt) = r(t) + v(t)*dt + 1/2*f*dt^2
+            p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;
+            p.position = box.apply_boundary_conditions(p.position);
+
+            // v(t+dt/2) = v(t)+f(t)/2*dt
+            p.velocity = p.velocity + dt/2.*p.force;
+        }
+    );
+    
+    // r(t + dt) --> f(t + dt)
+    
+    // First zero out the forces
+    for(auto& p : particles){ p.force = 0 * p.force; }
+
+    for(int i=0; i<particles.size()-1; i++) {
+        for(int j=i+1; j<particles.size(); j++) {
+            
+            Vector force = particles[i].force_law(particles[j], container());
+
+            particles[i].force += force;
+            particles[j].force -= force;
+        }
     }
+    
+    // --- Second half step ---
+    map_to_particles([dt](ParticleClass& p){
+
+            // v(t+dt) = v(t+dt/2)+f(t+dt)/2*dt
+            p.velocity = p.velocity + dt/2.*p.force;
+        }
+    );
+
+
+}
+*/
+__device__ double atomicAddDouble(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                             (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+            __double_as_longlong(val + __longlong_as_double(assumed)));
+    } while (assumed != old);
+    return __longlong_as_double(old);
 }
 
+
+
+
+// This is the kernel that is launched from CPU and GPU runs it for each cell
+template <typename ParticleT>
+__global__ 
+void integrator_kernel(ParticleT *particles,  PeriodicBoundaryBox<> *box, unsigned int n, int step) {
+    unsigned int row = gridDim.x;
+    unsigned int column = blockIdx.y * blockDim.y + threadIdx.x;
+
+    if( column > row && column < n ){
+        Vector<> force = particles[row].force_law(&particles[column], box);
+        for( int i=0; i<force.dimensions; ++i ){
+            atomicAddDouble( &particles[row].force[i], force[i] );
+            atomicAddDouble( &particles[column].force[i], - force[i] );
+        }  
+    }
+}
                                                       
 template <typename VectorT>
 __global__                                                       
@@ -77,7 +125,7 @@ void init_kernel(Particle<VectorT> *particles, int n) {
     }
 }                                                      
 
-template< typename ParticleT=Particle<> >
+template< typename ParticleT=Particle<>>
 class ParticleSystem
 {
     unsigned int n_particles;
@@ -124,7 +172,7 @@ class ParticleSystem
         // the device vector with the ::operator[]() i.e. positions[2] and that would
         // do all the memory copying for us!
         
-        integrator_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, step);
+        integrator_kernel<<<grid_size,block_size>>>(particles_ptr, box.device_ptr(), n_particles, step);
     }
     
     void simulation_init() {
