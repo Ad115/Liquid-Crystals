@@ -54,18 +54,19 @@ void print_particle( Particle<VectorT> *P) {
     printf("}");
 }
 
-template<typename VectorT>
+template<typename ParticleT>
 __host__ __device__
-void init_particle(Particle<VectorT> *P) {
-        new (P) Particle<VectorT>{};
+void init_particle(ParticleT *P) {
+        new (P) ParticleT{};
 }
 
-template< typename Container, typename VectorT=Vector<> >
+template< typename VectorT=Vector<> >
 class LennardJones: public Particle<VectorT>{
 
 public:
+        template< typename ContainerT >
         __host__ __device__
-        VectorT force_law(LennardJones *other, Container *box ){ /*
+        VectorT force_law(LennardJones *other, ContainerT *box ){ /*
             * The force law: Lennard Jones
             * ============================
             * 
