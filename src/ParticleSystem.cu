@@ -163,8 +163,8 @@ class ParticleSystem
          */
         
         unsigned int block_size = 1024;
-        unsigned int grid_size = n_particles / block_size + 1;
-      
+        dim3 grid_size( n_particles, n_particles / block_size + ( n_particles % block_size == 0 ? 0:1 ) );  
+        
         // Launch the kernel! As you can see we are not copying memory from CPU to GPU
         // as you would normally do with cudaMemcpy(), as we don't need to! The
         // vectors live in GPU already so we just need to know where they start (GPU
