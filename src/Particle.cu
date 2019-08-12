@@ -14,7 +14,7 @@ template< typename VectorT=Vector<> >
 class Particle {
     public:
         
-        using vector_t = VectorT;
+        using vector_type = VectorT;
         static constexpr int dimensions = VectorT::dimensions;
         
         VectorT position;
@@ -64,9 +64,6 @@ template< typename VectorT=Vector<> >
 class LennardJones: public Particle<VectorT>{
 
 public:
-
-    using vector_t = VectorT;
-    static constexpr int dimensions = VectorT::dimensions;
 
         template< typename ContainerT >
         __host__ __device__

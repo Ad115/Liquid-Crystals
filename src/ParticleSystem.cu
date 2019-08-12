@@ -91,6 +91,7 @@ void integrator_kernel(ParticleT *particles,  ContainerT *box, unsigned int n, i
 
     if( column > row && column < n ){
         auto force = particles[row].force_law(&particles[column], box);
+        print_vector( &force );
         for( int i=0; i<force.dimensions; ++i ){
             atomicAddDouble( &particles[row].force[i], force[i] );
             atomicAddDouble( &particles[column].force[i], - force[i] );
@@ -111,7 +112,7 @@ void init_kernel(ParticleT *particles, int n) {
           thrust::normal_distribution<double> dist(0, 1);
 
           // Create a random motion vector
-          using vector_type = ParticleT::vector_type;
+          using vector_type = typename ParticleT::vector_type;
           vector_type delta;
 
           for (int i=0; i<delta.dimensions; i++) {
@@ -189,7 +190,10 @@ class ParticleSystem
 
     void print() {
         printf("Container: \n\t");
+
+        box.get();
         print_container(box.raw_ptr());
+
         printf("\n");
         
         thrust::host_vector<ParticleT> p(particles);
@@ -197,7 +201,7 @@ class ParticleSystem
         printf("Particles: \n");
         for (int i=0; i<(n_particles-1); i++) {
             printf("\t");
-            print_particle(&(p[i]));
+            print_particle( &(p[i]) );
             printf("\n");
         }
 

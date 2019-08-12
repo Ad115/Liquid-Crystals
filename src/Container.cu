@@ -1,3 +1,5 @@
+
+
 /* 
 ## Clase `Container`
 
@@ -50,7 +52,7 @@ class PeriodicBoundaryBox : public Container<VectorT> {
     __host__ __device__ 
     VectorT box_size() { 
         VectorT side_lengths;
-        for (int i=0; i<dimensions; i++)
+        for (int i=0; i<side_lengths.dimensions; i++)
             side_lengths[i] = side_length;
 
         return side_lengths;
@@ -63,7 +65,7 @@ class PeriodicBoundaryBox : public Container<VectorT> {
         double half_length = side_length/2;
         VectorT dr = r2 - r1;
 
-        for(int D=0; D<dimensions; D++) {
+        for(int D=0; D<dr.dimensions; D++) {
 
             if (dr[D] <= -half_length) {
                 dr[D] += side_length;
