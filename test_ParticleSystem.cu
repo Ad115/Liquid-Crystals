@@ -45,9 +45,10 @@ Particles:
 
 int main(void)
 {
-  int n_particles = 10;
+  int n_particles = 2;
   double numeric_density = 0.01;
-  int steps = 10;    // understand it as "frames", how many steps in time
+  int steps = 1000;    // understand it as "frames", how many steps in time
+  double dt = 0.01;
 
   ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> sys(n_particles, numeric_density);
   sys.simulation_init();
@@ -57,7 +58,8 @@ int main(void)
   // This is great! As we don't have to be retrieving and re-sending, Thrust
   // functionality shines in this step. Great framework.
   for (int i=0; i<steps; i++) {
-    sys.simulation_step(i);
-    sys.print();
+    sys.simulation_step(dt);
   }
+  
+  sys.print();
 }
