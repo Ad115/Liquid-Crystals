@@ -42,12 +42,13 @@ Particles:
 
 #include "src/ParticleSystem.cu"
 #include "src/Particle.cu"
+#include "src/Vector.cu"
 
 int main(void)
 {
-  int n_particles = 2;
+  int n_particles = 10;
   double numeric_density = 0.01;
-  int steps = 1000;    // understand it as "frames", how many steps in time
+  int steps = 10;    // understand it as "frames", how many steps in time
   double dt = 0.01;
 
   ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> sys(n_particles, numeric_density);

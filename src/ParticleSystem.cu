@@ -33,31 +33,6 @@ __device__ double atomicAddDouble(double* address, double val)
     return __longlong_as_double(old);
 }
 
-
-// This is the kernel that is launched from CPU and GPU runs it for each cell
-template <typename ParticleT, typename ContainerT>
-__global__ 
-void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
-    //unsigned int row = gridDim.x;
-    unsigned int row = blockIdx.x;
-    unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
-
-    if(column == 0) {
-        particles[row].force = 0.;
-    }
-
-    __syncthreads();
-
-    if( column > row && column < n_particles ){
-        auto force = particles[row].force_law(&particles[column], box);
-        //print_vector( &force );
-        for( int i=0; i<force.dimensions; ++i ){
-            atomicAddDouble( &particles[row].force[i], force[i] );
-            atomicAddDouble( &particles[column].force[i], - force[i] );
-        }  
-    }
-}
-                                                      
 template <typename ParticleT>
 __global__                                                       
 void init_kernel(ParticleT *particles, int n) {
@@ -81,7 +56,32 @@ void init_kernel(ParticleT *particles, int n) {
 
         particles[index].position = delta;
     }
-}            
+}
+
+template <typename ParticleT, typename ContainerT>
+__global__ 
+void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
+    unsigned int row = blockIdx.x;
+    unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
+
+    // Reset the forces
+    if(column == 0) {
+        particles[row].force = 0.;
+    }
+
+    __syncthreads();
+
+    if( column > row && column < n_particles ){
+        
+        auto force = particles[row]
+                        .force_law(&particles[column], box);
+        
+        for( int i=0; i<force.dimensions; ++i ){
+            atomicAddDouble( &particles[row].force[i], force[i] );
+            atomicAddDouble( &particles[column].force[i], -force[i] );
+        }  
+    }
+}
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
@@ -97,6 +97,8 @@ void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, d
           particles[index].position = (*box).apply_boundary_conditions(new_pos); 
 
           // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
+          auto dv = 0.5*particle.force*dt;
+          //print_vector( &dv );
           particles[index].velocity += 0.5*particle.force*dt;
     }
 }            
@@ -132,7 +134,16 @@ class ParticleSystem
           particles{thrust::device_vector<ParticleT>(n)},
           box{pow(n/numeric_density, 1./dimensions)} {};
 
-    void simulation_step(double dt) {
+    void integrator(double dt) { /*
+        * Implementation of a velocity Vertlet integrator.
+        * See: http://www.pages.drexel.edu/~cfa22/msim/node23.html#sec:nmni
+        * 
+        * This integrator gives a lower error O(dt^4) and more stability than
+        * the standard forward integration (x(t+dt) += v*dt + 1/2 * f * dt^2)
+        * by looking at more timesteps (t, t+dt) AND (t-dt), but in order to 
+        * improve memory usage, the integration is done in two steps.
+        */
+
         // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
         // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
         first_half_step(dt);
@@ -178,9 +189,10 @@ class ParticleSystem
         unsigned int block_size = 1024;
         
         // Esta wea si funciona 
-        dim3 grid_size( n_particles,
-                        n_particles / block_size + ( n_particles % block_size == 0 ? 0:1 ) 
-               );  
+        dim3 grid_size( 
+                n_particles,
+                n_particles / block_size + ( n_particles % block_size == 0 ? 0:1 ) 
+             );  
         
         // Launch the kernel! As you can see we are not copying memory from CPU to GPU
         // as you would normally do with cudaMemcpy(), as we don't need to! The
@@ -192,6 +204,10 @@ class ParticleSystem
         // Update forces
         
         force_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, box_ptr);
+    }
+ 
+    void simulation_step(double dt) {
+        integrator(dt);
     }
     
     void simulation_init() {
