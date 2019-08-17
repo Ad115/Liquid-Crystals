@@ -12,12 +12,59 @@ kernel.
 
 #include <thrust/device_vector.h>
 #include <thrust/random.h>
-
+#include <iostream>
 #include "Particle.cu"
 #include "Vector.cu"
 #include "Container.cu"
 #include "device_obj.cu"
+/*
+class simple_cubic_lattice {
+    
+    unsigned dimensions;
+    double L;
+    int cube_length;
+    int particle_idx=0;
 
+    public:
+
+        template< typename ParticleSystem >
+        void fetch_parameters_from(const ParticleSystem& system) {
+            dimensions = system.dimensions();
+            L = system.container().side_length();
+
+             // No. of particles along every side of the cube
+            cube_length = ceil(pow(system.n_particles(), 1./system.dimensions()));
+                  // The lowest integer such that cube_length^DIMENSIONS >= n. 
+                  // Think of a cube with side cube_length where all particles 
+                  // are evenly spaced on a simfunction ple grid.
+        } 
+
+        template< typename ParticleSystem>
+        void operator()(ParticleSystem& system) { 
+
+            fetch_parameters_from(system);
+
+            using Particle = typename ParticleSystem::Particle_t;
+            system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
+        }
+
+        template< typename ParticleClass>
+        void particle_fn(ParticleClass& p) {
+
+            Vector position(dimensions);
+            for (int D=0; D<dimensions; D++) {
+                // Get position in a hypercube with volume = cube_length^DIMENSIONS.
+                position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
+                // Rescale to a box of volume = L^DIMENSIONS
+                position[D] *= (L/cube_length)*0.9; // The 0.9 factor is for safety,
+                                                    // particles on the edges aren't
+                                                    // too close.
+            }
+            p.set_position(position);
+            particle_idx++;
+        }
+};
+*/
 
 
 __device__ double atomicAddDouble(double* address, double val)
@@ -33,9 +80,9 @@ __device__ double atomicAddDouble(double* address, double val)
     return __longlong_as_double(old);
 }
 
-template <typename ParticleT>
+template <typename ParticleT, typename ContainerT>
 __global__                                                       
-void init_kernel(ParticleT *particles, int n) {
+void init_kernel(ParticleT *particles, int n, ContainerT *box) {
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
     if (index < n){
         
@@ -43,7 +90,8 @@ void init_kernel(ParticleT *particles, int n) {
           rng.discard(index);
 
           // create a mapping from random numbers to [0,1)
-          thrust::normal_distribution<double> dist(0, 1);
+          double L = (*box).side_length;
+          thrust::uniform_real_distribution<double> dist(0, L);
 
           // Create a random motion vector
           using vector_type = typename ParticleT::vector_type;
@@ -54,7 +102,7 @@ void init_kernel(ParticleT *particles, int n) {
               delta[i] = rnd_value;
           }
 
-        particles[index].position = delta;
+        particles[index].position = (*box).apply_boundary_conditions(delta);
     }
 }
 
@@ -128,7 +176,7 @@ class ParticleSystem
     using container_type = ContainerT;
     using vector_type = typename ParticleT::vector_type;
     static constexpr int dimensions = ParticleT::dimensions;
-    
+
     ParticleSystem(unsigned int n, double numeric_density) 
         : n_particles{n},
           particles{thrust::device_vector<ParticleT>(n)},
@@ -213,11 +261,12 @@ class ParticleSystem
     void simulation_init() {
         
         ParticleT* particles_ptr = thrust::raw_pointer_cast(particles.data());
+        ContainerT* box_ptr = box.device_ptr();
 
         unsigned int block_size = 1024;
         unsigned int grid_size = n_particles / block_size + 1;
         
-        init_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles);
+        init_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, box_ptr);
     }
 
     void print() {
@@ -238,4 +287,30 @@ class ParticleSystem
         }
 
     }
+
+    void write_xyz(std::ostream& stream) { /*
+        * Output the positions of the particles in the XYZ format.
+        * The format consists in a line with the number of particles,
+        * then a comment line followed by the space-separated coordinates 
+        * of each particle in different lines.
+        * 
+        * Example (for 3 particles in the xyz diagonal):
+        * 
+        *   10
+        *   
+        *   1.0 1.0 1.0
+        *   1.5 1.5 1.5
+        *   2.0 2.0 2.0
+        */
+        
+        thrust::host_vector<ParticleT> host_particles = particles;
+        stream << n_particles << "\n";
+        for (ParticleT p: host_particles) {
+            stream << "\n";
+            for (int D = 0; D < dimensions; D++)
+                stream << p.position[D] << " ";
+        }
+        stream << std::endl;
+        return;
+    };
 };

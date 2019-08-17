@@ -32,9 +32,11 @@ class Container {
 template< typename VectorT=Vector<> >
 class PeriodicBoundaryBox : public Container<VectorT> {
 
-    double side_length;
+    
 
     public: 
+
+    double side_length;
 
     __host__ __device__ PeriodicBoundaryBox( double L )
             : side_length(L) {}

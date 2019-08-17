@@ -108,6 +108,18 @@ Vector<Size, T> operator*(double r, const Vector<Size, T>& v) {
     return result;
 }
 
+
+template <int Size, typename T>
+__host__ __device__ 
+Vector<Size, T> operator*(const Vector<Size, T>& v, double r) {
+    Vector<Size, T> result(v);
+    for (int i=0; i<Size; i++) {
+        result[i] *= r;
+    }
+    return result;
+}
+
+
 template <int Size, typename T>
 __host__ __device__ 
 Vector<Size, T> operator+(double c, const Vector<Size, T>& v) {

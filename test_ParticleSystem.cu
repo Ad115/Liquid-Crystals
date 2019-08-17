@@ -44,12 +44,16 @@ Particles:
 #include "src/Particle.cu"
 #include "src/Vector.cu"
 
+#include <fstream>
+
 int main(void)
 {
-  int n_particles = 10;
-  double numeric_density = 0.01;
-  int steps = 10;    // understand it as "frames", how many steps in time
-  double dt = 0.01;
+  int n_particles = 10000;
+  double numeric_density = 0.1;
+  int steps = 500;    // understand it as "frames", how many steps in time
+  double dt = 0.0003;
+
+  std::ofstream outputf("output.xyz");
 
   ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> sys(n_particles, numeric_density);
   sys.simulation_init();
@@ -59,8 +63,11 @@ int main(void)
   // This is great! As we don't have to be retrieving and re-sending, Thrust
   // functionality shines in this step. Great framework.
   for (int i=0; i<steps; i++) {
-    sys.simulation_step(dt);
+	sys.simulation_step(dt);
+
+	sys.write_xyz(outputf);
+	printf("%d \n", i);
   }
   
-  sys.print();
+ sys.print();
 }
