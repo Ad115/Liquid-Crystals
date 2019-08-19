@@ -12,6 +12,7 @@ kernel.
 
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
+#include <thrust/execution_policy.h>
 #include <thrust/random.h>
 #include <iostream>
 #include "Particle.cu"
@@ -138,6 +139,7 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box, Vector
     if(column == 0) {
         
         VectorT total_force = thrust::reduce(
+                                                thrust::device,
                                                 &force_matrix[row *n_particles], // Forces corresponding to this particle 
                                                 &force_matrix[row *(n_particles+1)], 
                                                 (VectorT) 0., 

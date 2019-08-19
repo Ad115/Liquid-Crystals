@@ -48,16 +48,16 @@ Particles:
 
 int main(void)
 {
-  int n_particles = 100;
+  int n_particles = 10000;
   double numeric_density = 0.05;
 
   std::ofstream outputf("output.xyz");
 
   ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> system(n_particles, numeric_density);
   system.simulation_init();
-  system.print();
+  //system.print();
 
-  int simulation_steps = 10000;    // understand it as "frames", how many steps in time
+  int simulation_steps = 100;    // understand it as "frames", how many steps in time
   double time_step = 0.0001;
   double sample_period = 0.0007;
   
@@ -75,5 +75,5 @@ int main(void)
         printf("%d \n", i);
     }
   
- system.print();
+ //system.print();
 }
