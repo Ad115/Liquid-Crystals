@@ -287,7 +287,7 @@ void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){ /*
     */
 
     // --- First half step ---
-    map_to_particles([dt, &box=container()](ParticleClass& p){
+    map_to_particles([dt, box=container()](ParticleClass& p){
 
             // r(t+dt) = r(t) + v(t)*dt + 1/2*f*dt^2
             p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;

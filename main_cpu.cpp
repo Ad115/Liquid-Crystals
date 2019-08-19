@@ -28,7 +28,7 @@ int main( int argc, char **argv ) {
 
 
     std::ofstream outputf("output.xyz");
-    int simulation_steps = 2000;
+    int simulation_steps = 10000;
     int sampling_period = 0.1;
     double time_step = 0.01;
 

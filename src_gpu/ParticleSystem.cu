@@ -11,6 +11,7 @@ kernel.
 */
 
 #include <thrust/device_vector.h>
+#include <thrust/reduce.h>
 #include <thrust/random.h>
 #include <iostream>
 #include "Particle.cu"
@@ -106,11 +107,13 @@ void init_kernel(ParticleT *particles, int n, ContainerT *box) {
     }
 }
 
-template <typename ParticleT, typename ContainerT>
+template <typename ParticleT, typename ContainerT, typename VectorT>
 __global__ 
-void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
+void force_kernel(ParticleT *particles, int n_particles, ContainerT *box, VectorT *force_matrix) {
     unsigned int row = blockIdx.x;
     unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
+
+
 
     // Reset the forces
     if(column == 0) {
@@ -124,10 +127,27 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
         auto force = particles[row]
                         .force_law(&particles[column], box);
         
-        for( int i=0; i<force.dimensions; ++i ){
-            atomicAddDouble( &particles[row].force[i], force[i] );
-            atomicAddDouble( &particles[column].force[i], -force[i] );
-        }  
+        // Fill force matrix
+        force_matrix[ row*n_particles + column ] = force;
+        force_matrix[ column*n_particles + row ] = -force;
+    }
+
+    __syncthreads();
+
+    // Update particle forces
+    if(column == 0) {
+        
+        VectorT total_force = thrust::reduce(
+                                                &force_matrix[row *n_particles], // Forces corresponding to this particle 
+                                                &force_matrix[row *(n_particles+1)], 
+                                                (VectorT) 0., 
+                                                thrust::plus<VectorT>());
+        // for( int i=0; i<force.dimensions; ++i ){
+        //     atomicAddDouble( &particles[row].force[i], +force[i] );
+        //     atomicAddDouble( &particles[column].force[i], -force[i] );
+        // }  
+
+        particles[row].force = total_force;
     }
 }
 
@@ -226,6 +246,12 @@ class ParticleSystem
     }
 
     void update_forces() {
+
+        using vector_t = typename ParticleT::vector_type;
+
+        // Make space for the force matrix
+        thrust::device_vector<vector_t> forces(n_particles * n_particles);
+
         // As we cannot send device vectors to the kernel (as device_vector is at
         // the end of the day a GPU structure abstraction in CPU) we have to get the
         // pointer in GPU memory in order for the kernel to know where to start 
@@ -233,6 +259,11 @@ class ParticleSystem
         
         ParticleT* particles_ptr = thrust::raw_pointer_cast(particles.data());
         ContainerT* box_ptr = box.device_ptr();
+        vector_t *force_matrix = thrust::raw_pointer_cast(forces.data());
+
+
+        
+        
       
         unsigned int block_size = 1024;
         
@@ -251,7 +282,7 @@ class ParticleSystem
 
         // Update forces
         
-        force_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, box_ptr);
+        force_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, box_ptr, force_matrix);
     }
  
     void simulation_step(double dt) {

@@ -31,10 +31,13 @@ class Vector {
     Vector(T ...entries) : vector{entries...} {}
 
     __host__ __device__ 
-    double& operator[](int index) { return vector[index]; }
+    Type& operator[](int index) { return vector[index]; }
 
     __host__ __device__ 
-    double operator[](int index) const { return vector[index]; }
+    Type operator[](int index) const { return vector[index]; }
+
+    __host__ __device__ 
+    Vector operator-() const { return (*this)*(-1.0); }
 
     __host__ __device__ 
     Vector<Size, Type> operator+=(const Vector<Size, Type>& other){

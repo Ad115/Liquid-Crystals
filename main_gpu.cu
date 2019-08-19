@@ -40,34 +40,40 @@ Particles:
 ```
 */
 
-#include "src/ParticleSystem.cu"
-#include "src/Particle.cu"
-#include "src/Vector.cu"
+#include "src_gpu/ParticleSystem.cu"
+#include "src_gpu/Particle.cu"
+#include "src_gpu/Vector.cu"
 
 #include <fstream>
 
 int main(void)
 {
   int n_particles = 100;
-  double numeric_density = 0.1;
-  int steps = 500;    // understand it as "frames", how many steps in time
-  double dt = 0.0003;
+  double numeric_density = 0.05;
 
   std::ofstream outputf("output.xyz");
 
-  ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> sys(n_particles, numeric_density);
-  sys.simulation_init();
-  sys.print();
-  
-  // Particle data lives in GPU now so we call the kernel on them few times!
-  // This is great! As we don't have to be retrieving and re-sending, Thrust
-  // functionality shines in this step. Great framework.
-  for (int i=0; i<steps; i++) {
-	sys.simulation_step(dt);
+  ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> system(n_particles, numeric_density);
+  system.simulation_init();
+  system.print();
 
-	sys.write_xyz(outputf);
-	printf("%d \n", i);
-  }
+  int simulation_steps = 10000;    // understand it as "frames", how many steps in time
+  double time_step = 0.0001;
+  double sample_period = 0.0007;
   
- sys.print();
+   double t = 0;
+   for (int i=0; i<simulation_steps; i++) {
+	   
+	   if(t > sample_period) {
+            system.write_xyz(outputf);
+            t = 0;
+        }
+
+        system.simulation_step(time_step);
+        t += time_step;
+
+        printf("%d \n", i);
+    }
+  
+ system.print();
 }
