@@ -25,7 +25,7 @@ Particles:
 ```
 */
 
-#include "src/Particle.cu"
+#include "src_gpu/Particle.cu"
 
 template<typename VectorT>
 __global__ 

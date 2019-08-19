@@ -51,12 +51,14 @@ Particles:
 ```
 */
 
-#include "src/Vector.cu"
-#include "src/Particle.cu"
-#include "src/Container.cu"
+#include "src_gpu/Vector.cu"
+#include "src_gpu/Particle.cu"
+#include "src_gpu/Container.cu"
+#include "src_gpu/device_obj.cu"
+
 #include <thrust/random.h>
 #include <thrust/device_vector.h>
-#include "src/device_obj.cu"
+
 
 template <int Size, typename T>
 __global__ 

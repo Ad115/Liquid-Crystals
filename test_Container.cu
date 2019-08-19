@@ -56,8 +56,8 @@ Diff vector from particle 0 to particle 1: [-0.45, -0.24, -1.14]
 
 #include <thrust/random.h>
 
-#include "src/Particle.cu"
-#include "src/Container.cu"
+#include "src_gpu/Particle.cu"
+#include "src_gpu/Container.cu"
 
 template<typename VectorT>
 __global__ 

@@ -40,9 +40,9 @@ Particles:
 ```
 */
 
-#include "src_gpu/ParticleSystem.cu"
-#include "src_gpu/Particle.cu"
-#include "src_gpu/Vector.cu"
+#include "src/ParticleSystem.cu"
+#include "src/Particle.cu"
+#include "src/Vector.cu"
 
 #include <fstream>
 

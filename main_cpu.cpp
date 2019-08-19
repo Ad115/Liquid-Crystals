@@ -1,23 +1,17 @@
 #include <iostream>
 #include <fstream>
 #include <numeric>
-#include "src/Particle.hpp"
-#include "src/Vector.hpp"
-#include "src/ParticleSystem.hpp"
-#include "src/InitialConditions.hpp"
+#include "src_cpu/Particle.hpp"
+#include "src_cpu/Vector.hpp"
+#include "src_cpu/ParticleSystem.hpp"
+#include "src_cpu/InitialConditions.hpp"
 
 //Compilation: g++ main.cpp -std=c++11 -Wc++11-extensions -o PartiCuditas.bin
-/*El arreglo se adapta tanto al tamaño de la llave como a la cantidad de devices
-   para asi obtener un comun multiplo de ambos
-
-*Super formula nextInt = (cM - (N % cM)) + N;
-<<El comun multiplo esta dado por cM = (N * CuantosCachos)>>
-*/
 
 int main( int argc, char **argv ) {
     int n_particles = 100;
     int dimensions = 3; 
-    double numeric_density = .01;
+    double numeric_density = .05;
     temperature thermostat{5.};
 
     auto system = ParticleSystem<LennardJones, PeriodicBoundaryBox>(
@@ -35,7 +29,7 @@ int main( int argc, char **argv ) {
 
     std::ofstream outputf("output.xyz");
     int simulation_steps = 2000;
-    int sampling_period = 0.05;
+    int sampling_period = 0.1;
     double time_step = 0.01;
 
 
@@ -60,7 +54,3 @@ int main( int argc, char **argv ) {
               << temperature::measure(system)
               << std::endl;
 }
-
-
-
-

@@ -17,7 +17,7 @@ Vector size: 3
 ```
 */
 
-#include "src/Vector.cu"
+#include "src_gpu/Vector.cu"
 
 /* Init the vector object in the device */
 template <int Size, typename T>
