@@ -106,6 +106,7 @@ void init_kernel(ParticleT *particles, int n, ContainerT *box) {
     }
 }
 
+
 template <typename ParticleT, typename ContainerT>
 __global__ 
 void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
@@ -124,10 +125,14 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
         auto force = particles[row]
                         .force_law(&particles[column], box);
         
-        for( int i=0; i<force.dimensions; ++i ){
-            atomicAddDouble( &particles[row].force[i], force[i] );
-            atomicAddDouble( &particles[column].force[i], -force[i] );
-        }  
+        // https://stackoverflow.com/questions/8812422/how-to-find-epsilon-min-and-max-constants-for-cuda
+        if ((force*force) >= 1e-7) {
+            for( int i=0; i<force.dimensions; ++i ){
+                atomicAddDouble( &particles[row].force[i], force[i] );
+                atomicAddDouble( &particles[column].force[i], -force[i] );
+            }  
+        }
+        
     }
 }
 

@@ -84,6 +84,17 @@ class Vector {
         return result;
     }
 
+    __host__ __device__ 
+    bool is_null(){
+        auto magnitude_sqrd = (*this) * (*this);
+        return magnitude_sqrd == (Type) 0.;
+    }
+
+    __host__ __device__ 
+    bool is_null(Type epsilon){
+        auto magnitude_sqrd = (*this) * (*this);
+        return magnitude_sqrd <= epsilon;
+    }
 
     friend std::ostream& operator<<(
         std::ostream& stream, 
