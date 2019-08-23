@@ -1,42 +1,13 @@
 /* 
-### El primer `main`
+### La simulación del sistema de partículas de Lennard Jones.
 
-Lo siguiente es para probar la funcionalidad del `ParticleSystem`, pero también 
-sirve como primer prototipo de la simulación completa, ya que ya contamos con 
-los elementos básicos para ella.
+Modelo de esferas que interaccionan con el potencial de Lennard Jones.
+Las partículas viven e interaccionan en el GPU. 
 
 Para compilar y ejecutar:
 ```
-nvcc test_ParticleSystem.cu -o test_ParticleSystem
-./test_ParticleSystem
-```
-
-Salida esperada:
-```
-Container: 
-	Container = {side_lengths:[10.00, 10.00, 10.00]}
-Particles: 
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [0.50, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-Container: 
-	Container = {side_lengths:[10.00, 10.00, 10.00]}
-Particles: 
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
-	{"position": [1.00, 0.00, 0.00], "velocity": [0.00, 0.00, 0.00], "force": [0.00, 0.00, 0.00]}
+nvcc main_gpu.cu -std=c++11 -arch=sm_75
+./a.out
 ```
 */
 
@@ -48,8 +19,8 @@ Particles:
 
 int main(void)
 {
-  int n_particles = 10000;
-  double numeric_density = 0.05;
+  int n_particles = 200;
+  double numeric_density = 0.1;
 
   std::ofstream outputf("output.xyz");
 
@@ -57,9 +28,9 @@ int main(void)
   system.simulation_init();
   //system.print();
 
-  int simulation_steps = 100;    // understand it as "frames", how many steps in time
-  double time_step = 0.0001;
-  double sample_period = 0.0007;
+  int simulation_steps = 15000;    // understand it as "frames", how many steps in time
+  double time_step = 0.00001;
+  double sample_period = 0.00005;
   
    double t = 0;
    for (int i=0; i<simulation_steps; i++) {

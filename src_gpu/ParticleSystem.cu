@@ -17,92 +17,82 @@ kernel.
 #include "Vector.cu"
 #include "Container.cu"
 #include "device_obj.cu"
-/*
-class simple_cubic_lattice {
-    
-    unsigned dimensions;
-    double L;
-    int cube_length;
-    int particle_idx=0;
 
-    public:
 
-        template< typename ParticleSystem >
-        void fetch_parameters_from(const ParticleSystem& system) {
-            dimensions = system.dimensions();
-            L = system.container().side_length();
+template <typename VectorT, typename RandomEngine>
+__host__ __device__ 
+VectorT random_position(unsigned int particle_idx, double side_length, RandomEngine rng) {
+    // Create random numbers in the range [0,L)
+    thrust::uniform_real_distribution<double> unif(0, side_length);
 
-             // No. of particles along every side of the cube
-            cube_length = ceil(pow(system.n_particles(), 1./system.dimensions()));
-                  // The lowest integer such that cube_length^DIMENSIONS >= n. 
-                  // Think of a cube with side cube_length where all particles 
-                  // are evenly spaced on a simfunction ple grid.
-        } 
+    VectorT position;
+    for (int i=0; i<position.dimensions; i++) {
+        float random_value = unif(rng);
+        position[i] = random_value;
+    }
 
-        template< typename ParticleSystem>
-        void operator()(ParticleSystem& system) { 
+    return position;
+}
 
-            fetch_parameters_from(system);
+template <typename VectorT>
+__host__ __device__ 
+VectorT cubic_lattice_position(unsigned int particle_idx, double side_length, int n_particles) {
 
-            using Particle = typename ParticleSystem::Particle_t;
-            system.map_to_particles([this](Particle& p) { (*this).particle_fn(p); });
+    // No. of particles along every side of the cube
+    long cube_length = ceil(pow(n_particles, 1./VectorT::dimensions));
+    // The lowest integer such that cube_length^DIMENSIONS >= n. 
+    // Think of a cube with side cube_length where all particles 
+    // are evenly spaced on a simfunction ple grid.
+
+    VectorT position;
+    for (int D=0; D<position.dimensions; D++) {
+         // Get position in a hypercube with volume = cube_length^DIMENSIONS.
+        position[D] = ( (int)(particle_idx / pow(cube_length, D)) % cube_length );
+        // Rescale to a box of volume = L^DIMENSIONS
+        position[D] *= (side_length/cube_length) * 0.2;  // Make the cube be as big as the box.
+                                                                        // ^^ This last factor rescales the cube.
+        position[D] += cube_length / 2; // Move the cube to the center of the screen
+    }
+
+    return position;
+}
+
+template <typename VectorT, typename RandomEngine>
+__host__ __device__ 
+VectorT random_velocity(RandomEngine rng) {
+
+    thrust::normal_distribution<double> norm(0., 1.);
+
+    VectorT velocity;
+        for (int i=0; i<velocity.dimensions; i++) {
+            float random_value = norm(rng);
+            velocity[i] = random_value;
         }
-
-        template< typename ParticleClass>
-        void particle_fn(ParticleClass& p) {
-
-            Vector position(dimensions);
-            for (int D=0; D<dimensions; D++) {
-                // Get position in a hypercube with volume = cube_length^DIMENSIONS.
-                position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
-                // Rescale to a box of volume = L^DIMENSIONS
-                position[D] *= (L/cube_length)*0.9; // The 0.9 factor is for safety,
-                                                    // particles on the edges aren't
-                                                    // too close.
-            }
-            p.set_position(position);
-            particle_idx++;
-        }
-};
-*/
-
-
-__device__ double atomicAddDouble(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                             (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed,
-            __double_as_longlong(val + __longlong_as_double(assumed)));
-    } while (assumed != old);
-    return __longlong_as_double(old);
+    return velocity;
 }
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
 void init_kernel(ParticleT *particles, int n, ContainerT *box) {
+
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+
     if (index < n){
         
-          thrust::default_random_engine rng(index*1000 + index*index);
-          rng.discard(index);
+        // Instantiate random number engine
+        thrust::default_random_engine rng(index*1000 + index*index);
+        rng.discard(index);
 
-          // create a mapping from random numbers to [0,1)
-          double L = (*box).side_length;
-          thrust::uniform_real_distribution<double> dist(0, L);
+        double L = (*box).side_length;
+        using vector_type = typename ParticleT::vector_type;
 
-          // Create a random motion vector
-          using vector_type = typename ParticleT::vector_type;
-          vector_type delta;
-
-          for (int i=0; i<delta.dimensions; i++) {
-              float rnd_value = dist(rng);
-              delta[i] = rnd_value;
-          }
-
-        particles[index].position = (*box).apply_boundary_conditions(delta);
+        // Set particle position        
+        //auto position = random_position<vector_type>(index, L, rng);
+        auto position = cubic_lattice_position<vector_type>(index, L, n);
+        particles[index].position = (*box).apply_boundary_conditions(position);
+        
+        // Set particle velocity
+      particles[index].velocity = random_velocity<vector_type>(rng);
     }
 }
 
@@ -126,10 +116,10 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
                         .force_law(&particles[column], box);
         
         // https://stackoverflow.com/questions/8812422/how-to-find-epsilon-min-and-max-constants-for-cuda
-        if ((force*force) >= 1e-7) {
+        if ((force*force) >= 1e-8f) {
             for( int i=0; i<force.dimensions; ++i ){
-                atomicAddDouble( &particles[row].force[i], force[i] );
-                atomicAddDouble( &particles[column].force[i], -force[i] );
+                atomicAdd( &particles[row].force[i], force[i] );
+                atomicAdd( &particles[column].force[i], -force[i] );
             }  
         }
         
