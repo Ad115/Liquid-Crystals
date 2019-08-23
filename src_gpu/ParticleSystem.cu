@@ -12,6 +12,8 @@ kernel.
 
 #include <thrust/device_vector.h>
 #include <thrust/random.h>
+#include <thrust/transform_reduce.h>
+#include <thrust/for_each.h>
 #include <iostream>
 #include "Particle.cu"
 #include "Vector.cu"
@@ -42,7 +44,7 @@ VectorT cubic_lattice_position(unsigned int particle_idx, double side_length, in
     long cube_length = ceil(pow(n_particles, 1./VectorT::dimensions));
     // The lowest integer such that cube_length^DIMENSIONS >= n. 
     // Think of a cube with side cube_length where all particles 
-    // are evenly spaced on a simfunction ple grid.
+    // are evenly spaced on a simple grid.
 
     VectorT position;
     for (int D=0; D<position.dimensions; D++) {
@@ -161,11 +163,12 @@ void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, 
 template< typename ParticleT=Particle<>, typename ContainerT=PeriodicBoundaryBox<> >
 class ParticleSystem
 {
-    unsigned int n_particles;
     thrust::device_vector< ParticleT > particles;
     device_obj< ContainerT > box;
 
   public:
+
+    unsigned int n_particles;
     
     using particle_type = ParticleT;
     using container_type = ContainerT;
@@ -176,6 +179,28 @@ class ParticleSystem
         : n_particles{n},
           particles{thrust::device_vector<ParticleT>(n)},
           box{pow(n/numeric_density, 1./dimensions)} {};
+
+    template <typename MeasurementUnit, typename MeasureFn>
+    MeasurementUnit measure_particles(MeasureFn measure_fn) {
+        return 
+            thrust::transform_reduce(
+                    particles.begin(), particles.end(), 
+                    measure_fn,
+                    0.,
+                    thrust::plus<MeasurementUnit>{}
+            );
+    }
+
+    template <typename ParticleFn>
+    ParticleFn map_to_particles(ParticleFn particle_fn) {
+        
+        thrust::for_each(
+            particles.begin(), particles.end(),
+            particle_fn
+        );
+
+        return particle_fn;
+    }
 
     void integrator(double dt) { /*
         * Implementation of a velocity Vertlet integrator.
