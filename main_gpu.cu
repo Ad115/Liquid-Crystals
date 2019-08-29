@@ -6,7 +6,7 @@ Las partículas viven e interaccionan en el GPU.
 
 Para compilar y ejecutar:
 ```
-nvcc main_gpu.cu -std=c++11 -arch=sm_75
+nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 ./a.out
 ```
 */
@@ -22,13 +22,17 @@ int main(void)
 {
   int n_particles = 200;
   double numeric_density = 0.1;
-  Thermostat thermostat{.5};
+  Thermostat thermostat{5.};
 
   std::ofstream outputf("output.xyz");
 
   ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> system(n_particles, numeric_density);
   system.simulation_init();
-  //thermostat.apply(system);
+
+	printf("Initial system temperature: %lf\n", thermostat.measure(system));
+  thermostat.apply(system);
+	printf("Corrected system temperature: %lf\n", thermostat.measure(system));
+
   //system.print();
 
   int simulation_steps = 15000;    // understand it as "frames", how many steps in time
@@ -43,11 +47,14 @@ int main(void)
             t = 0;
         }
 
-		system.simulation_step(time_step);
-		//thermostat.apply(system);
+		    system.simulation_step(time_step);
+
+        thermostat.setpoint += 5e-2;
+		    thermostat.apply(system);
+
         t += time_step;
 
-        printf("%d \n", i);
+        printf("%d : temperature %lf\n", i, thermostat.measure(system));
     }
   
  //system.print();

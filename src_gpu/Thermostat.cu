@@ -15,8 +15,8 @@ public:
         using ParticleT = typename ParticleSystem::particle_type;
     
         return 
-            system.measure_particles( 
-                    [n=system.n_particles] __device__ (ParticleT& p) -> double{ 
+            system.template measure_particles<double>( 
+                    [n=system.n_particles] __device__ (ParticleT p){ 
                         return 2./(3*n)*p.kinetic_energy(); 
                     } 
             );
