@@ -114,11 +114,16 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
 
     if( column > row && column < n_particles ){
         
-        auto force = particles[row]
-                        .force_law(&particles[column], box);
-        
-        // https://stackoverflow.com/questions/8812422/how-to-find-epsilon-min-and-max-constants-for-cuda
-        if ((force*force) >= 1e-8f) {
+        double cutoff_radius = 3.5;
+        auto dr = box->distance_vector(
+            particles[row].position, 
+            particles[column].position
+        );
+
+        if ((dr * dr) < (cutoff_radius * cutoff_radius)) {
+            auto force = particles[row]
+                .force_law(&particles[column], box);
+
             for( int i=0; i<force.dimensions; ++i ){
                 atomicAdd( &particles[row].force[i], force[i] );
                 atomicAdd( &particles[column].force[i], -force[i] );
