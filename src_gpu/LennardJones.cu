@@ -14,16 +14,10 @@ public:
             * See: http://www.pages.drexel.edu/~cfa22/msim/node26.html
             */
             VectorT dr = box->distance_vector((*this).position, other->position);
-            double r2=1./(dr*dr);
-            double rcut=3.5;
 
-            double f;
-            if (r2<rcut*rcut){
-                double r6=r2*r2*r2;
-                f=48*(r6*r6-0.5*r6);
+            double r2 = (dr*dr);
+            double r6 = 1./(r2 * r2 * r2);
 
-            } else { f = 0; }
-
-            return f/r2 * dr;
+            return ( 48*(r6*r6 - 0.5*r6)/r2 )* dr;
         }
 };
