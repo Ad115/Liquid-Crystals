@@ -18,6 +18,8 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 
 #include <fstream>
 
+using LJSystem = ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>>;
+
 int main(void)
 {
   int n_particles = 200;
@@ -26,7 +28,7 @@ int main(void)
 
   std::ofstream outputf("output.xyz");
 
-  ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>> system(n_particles, numeric_density);
+  LJSystem system(n_particles, numeric_density);
   system.simulation_init();
 
 	printf("Initial system temperature: %lf\n", thermostat.measure(system));
