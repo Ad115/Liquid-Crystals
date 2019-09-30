@@ -23,8 +23,9 @@ class Vector {
 
     public:
 
-    using value_type = Type;    
+    using value_type = Type;
     static constexpr int dimensions = Size;
+    int size = Size;
 
     template <typename... T>
     __host__ __device__ 
@@ -35,6 +36,13 @@ class Vector {
 
     __host__ __device__ 
     double operator[](int index) const { return vector[index]; }
+
+    __host__ __device__ 
+    bool operator==(const Vector<Size, Type>& other) const {
+        for (int i=0; i<Size; i++) 
+            if ((*this)[i] != other[i]) return false;
+        return true;
+    }
 
     __host__ __device__ 
     Vector<Size, Type> operator+=(const Vector<Size, Type>& other){
