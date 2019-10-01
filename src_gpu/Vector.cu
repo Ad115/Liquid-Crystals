@@ -78,6 +78,17 @@ class Vector {
     }
 
     __host__ __device__ 
+    Vector<Size, Type> operator-() const { /*
+        * Minus operator:
+        * (-v)[i] == -v[i]
+        */
+        Vector<Size, Type> result;
+        result -= *this;
+
+        return result;
+    }
+
+    __host__ __device__ 
     Type operator*(const Vector<Size, Type>& other) const { /*
         * Dot product: 
         * (v1 * v2) = v1[1]*v2[1] + v1[2]*v2[2] + ...
@@ -140,6 +151,18 @@ Vector<Size, T> operator*(const Vector<Size, T>& v, double r) { /*
     * Multiplication by scalar (from the left).
     */
     return r * v; // <- Delegate to multiplication by scalar from the right
+}
+
+template <int Size, typename T>
+__host__ __device__ 
+Vector<Size, T> operator/(const Vector<Size, T>& v, double r) { /*
+    * Division by scalar.
+    */
+    Vector<Size, T> result(v);
+    for (int i=0; i<Size; i++) {
+        result[i] /= r;
+    }
+    return result;
 }
 
 
@@ -209,6 +232,13 @@ SCENARIO("Vector specification") {
         THEN("Another vector can be initialized from it") {
             auto v2 = v;
             CHECK(v2 == Vector<>{1., 3., 5.});
+        }
+
+        THEN("It can be inverted") {
+            auto minus_v = -v;
+            CHECK(minus_v[0] == -v[0]);
+            CHECK(minus_v[1] == -v[1]);
+            CHECK(minus_v[2] == -v[2]);
         }
 
         THEN("It is unchanged by adding or substracting a null vector") {

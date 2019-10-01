@@ -16,3 +16,4 @@
 #include "src_gpu/Vector.cu"
 #include "src_gpu/Container.cu"
 #include "src_gpu/Particle.cu"
+#include "src_gpu/LennardJones.cu"

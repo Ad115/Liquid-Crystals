@@ -31,6 +31,23 @@ template< typename VectorT >
 constexpr int Container<VectorT>::dimensions;
 
 template< typename VectorT=Vector<> >
+class EmptySpace : public Container<VectorT> {
+private:
+
+public:
+
+    __host__ __device__ 
+    VectorT apply_boundary_conditions(const VectorT& position) const {
+        return position;
+    }
+
+    __host__ __device__
+    VectorT distance_vector(const VectorT& p1, const VectorT& p2) const {
+        return (p2 - p1);
+    }
+};
+
+template< typename VectorT=Vector<> >
 class PeriodicBoundaryBox : public Container<VectorT> {
 
     public:
@@ -108,7 +125,7 @@ class PeriodicBoundaryBox : public Container<VectorT> {
 SCENARIO("Container specification") {
 
     GIVEN("A container") {
-        using vector_t = Vector<>;
+        using vector_t = Vector<3, double>;
         Container<vector_t> box;
 
         THEN("It exists in a system of coordinates") {
@@ -126,6 +143,59 @@ SCENARIO("Container specification") {
         // box.distance_vector(Vector<>(), Vector<>());
     }
 }
+
+
+
+SCENARIO("Empty space specification") {
+
+    GIVEN("Empty, infinite space as a container") {
+
+        using vector_t = Vector<3, double>;
+        EmptySpace<vector_t> empty_box;
+
+        REQUIRE(empty_box.dimensions == 3);
+
+        using empty_box_vector_t = typename decltype(empty_box)::vector_type;
+        REQUIRE(typeid(empty_box_vector_t) == typeid(vector_t));
+
+
+        WHEN("Boundary conditions are applied") {
+
+            THEN("All vectors are left unchanged") { 
+
+                Vector<> random1 = {102., 0.54, -23.4};
+                Vector<> random2 = {0., 0., 0.};
+                Vector<> random3 = {5e-12, 0.54, -.4};
+    
+                Vector<> wrapped;
+                wrapped = empty_box.apply_boundary_conditions(random1);
+                CHECK(wrapped == random1);
+    
+                wrapped = empty_box.apply_boundary_conditions(random2);
+                CHECK(wrapped == random2);
+    
+                wrapped = empty_box.apply_boundary_conditions(random3);
+                CHECK(wrapped == random3);
+            }
+        }
+
+        WHEN("It is used to measure distance btw vectors") {
+
+            THEN("The distance vector is vector difference") {
+
+                Vector<> u = {0., 0., 0.};
+                Vector<> v = {102., 0.54, -23.4};
+
+                CHECK(empty_box.distance_vector(u, v) == (v - u));
+                CHECK(empty_box.distance_vector(u, v) == v);
+                CHECK(empty_box.distance_vector(v, u) == (u - v));
+                CHECK(empty_box.distance_vector(v, u) == -v);
+            }
+        }
+    }
+}
+
+
 
 SCENARIO("Periodic boundary box specification") {
 
