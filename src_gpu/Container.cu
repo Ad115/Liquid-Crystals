@@ -77,30 +77,19 @@ class PeriodicBoundaryBox : public Container<VectorT> {
         }
         return dr;
     }
+
+    friend std::ostream& operator<<(
+        std::ostream& stream, 
+        const PeriodicBoundaryBox<VectorT>& box) {
+
+        stream << "PeriodicBoundary{";
+        for (int i=0; i < box.dimensions-1; i++)
+            stream << box.side_length << ", ";
+                    
+        stream << box.side_length << '}';
+        return stream;
+    }
 };
-
-template<typename ContainerT> 
-__global__ 
-void init_container_kernel(ContainerT *ptr, double side_length) {
-    new (ptr) ContainerT(side_length);
-}
-
-template<typename ContainerT>
-__host__ __device__
-void print_container(ContainerT *ptr) {
-    printf("Container = {side_lengths:");
-    auto sides = (*ptr).box_size();
-    print_vector( &sides );
-    printf("}");
-}
-
-template<typename ContainerT>
-__global__ 
-void print_container_kernel(ContainerT *ptr) {
-    print_container(ptr);
-    printf("\n");
-}
-
 
 
 /* -----------------------------------------------------------------------
@@ -146,6 +135,7 @@ SCENARIO("Periodic boundary box specification") {
         double L = 100;
         PeriodicBoundaryBox<vector_t> pacman_box(L);
 
+        CAPTURE(pacman_box);
         REQUIRE(pacman_box.side_length == 100);
         REQUIRE(pacman_box.dimensions == 3);
 
@@ -207,7 +197,7 @@ SCENARIO("Periodic boundary box specification") {
                 Vector<> u = {L/4, L/4, L/4}; // Halfway towards the center
                 Vector<> v = {L, L, L}; // The farthest corner
                 Vector<> expected_distance = {L/4, L/4, L/4}; // Wrapped around
-
+                
                 CHECK(pacman_box.distance_vector(v, u) == expected_distance);
             }
         }

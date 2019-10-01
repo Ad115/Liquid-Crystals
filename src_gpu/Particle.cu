@@ -22,20 +22,14 @@ class Particle {
         VectorT force;
 
         __host__ __device__
-        void set_position(const VectorT& new_position) { position = new_position; }
-
-        __host__ __device__
-        void set_velocity(const VectorT& new_velocity) { velocity = new_velocity; }
-
-        __host__ __device__
-        void set_force(const VectorT& new_force) { force = new_force; }
-
-        __host__ __device__
         double kinetic_energy() {
             auto& v = velocity;
             return 1/2. * (v*v);
         }
 };
+
+template<class VectorT>
+constexpr int Particle<VectorT>::dimensions;
 
 template<typename VectorT>
 __host__ __device__
