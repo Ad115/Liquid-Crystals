@@ -122,7 +122,10 @@ constexpr int Vector<Size, T>::dimensions;
 
 template <int Size, typename T>
 __host__ __device__ 
-Vector<Size, T> operator*(double r, const Vector<Size, T>& v) {
+Vector<Size, T> operator*(double r, const Vector<Size, T>& v) { /*
+    * Multiplication by scalar (from the right):
+    *   (a * v)[i] = a * v[i]
+    */
     Vector<Size, T> result(v);
     for (int i=0; i<Size; i++) {
         result[i] *= r;
@@ -133,23 +136,35 @@ Vector<Size, T> operator*(double r, const Vector<Size, T>& v) {
 
 template <int Size, typename T>
 __host__ __device__ 
-Vector<Size, T> operator*(const Vector<Size, T>& v, double r) {
-    Vector<Size, T> result(v);
-    for (int i=0; i<Size; i++) {
-        result[i] *= r;
-    }
-    return result;
+Vector<Size, T> operator*(const Vector<Size, T>& v, double r) { /*
+    * Multiplication by scalar (from the left).
+    */
+    return r * v; // <- Delegate to multiplication by scalar from the right
 }
 
 
 template <int Size, typename T>
 __host__ __device__ 
-Vector<Size, T> operator+(double c, const Vector<Size, T>& v) {
+Vector<Size, T> operator+(double c, const Vector<Size, T>& v) { /*
+    * Sum with scalar from the right (broadcasting):
+    *   (a + v)[i] = a + v[i]
+    * This behavior is similar to numpy arrays. Useful if one wants a vector 
+    * filled with a specific value:
+    *       auto all_ones = (1 + Vector<>{});
+    */
     Vector<Size, T> result(v);
     for (int i=0; i<Size; i++) {
         result[i] += c;
     }
     return result;
+}
+
+template <int Size, typename T>
+__host__ __device__ 
+Vector<Size, T> operator+(const Vector<Size, T>& v, double c) { /*
+    * Sum with scalar from the left (broadcasting).
+    */
+    return (c+v); // <- Delegate to sum with scalar from the right
 }
 
 
