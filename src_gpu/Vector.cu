@@ -178,7 +178,7 @@ Vector<Size, T> operator+(const Vector<Size, T>& v, double c) { /*
  Run with `make test`.
 */
 
-#ifdef __TEST__
+#ifdef __TESTING__
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid

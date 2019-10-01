@@ -111,7 +111,7 @@ void print_container_kernel(ContainerT *ptr) {
 
  Run with `make test`.
 */
-#ifdef __TEST__
+#ifdef __TESTING__
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
@@ -154,6 +154,7 @@ SCENARIO("Periodic boundary box specification") {
 
 
         WHEN("Boundary conditions are applied") {
+
             THEN("Vectors within it's boundary are left unchanged") { 
 
                 Vector<> middle = {L/2, L/2, L/2}; // The middle of the box
@@ -173,10 +174,10 @@ SCENARIO("Periodic boundary box specification") {
     
             THEN("Vectors outside it's boundary are wrapped") {
     
-                Vector<> outside_boundary_1 = {0., 0., L + L/2};
+                Vector<> outside_boundary_1 = {0., 0., (L + L/2)};
                 Vector<> wrap_expected_1 = {0., 0., L/2};
     
-                Vector<> outside_boundary_2 = {L/2, 0.-L/2, L/2};
+                Vector<> outside_boundary_2 = {L/2, (0 - L/2), L/2};
                 Vector<> wrap_expected_2 = {L/2, L/2, L/2};
     
     
