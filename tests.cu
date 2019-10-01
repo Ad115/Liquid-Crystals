@@ -10,6 +10,8 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
+#define __TEST__
+
 // --- Files to test
 #include "src_gpu/Vector.cu"
 #include "src_gpu/Container.cu"

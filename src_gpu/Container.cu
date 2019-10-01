@@ -111,6 +111,7 @@ void print_container_kernel(ContainerT *ptr) {
 
  Run with `make test`.
 */
+#ifdef __TEST__
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
@@ -212,4 +213,5 @@ SCENARIO("Periodic boundary box specification") {
     }
 }
 
+#endif
 #endif

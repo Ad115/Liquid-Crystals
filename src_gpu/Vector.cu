@@ -178,6 +178,8 @@ Vector<Size, T> operator+(const Vector<Size, T>& v, double c) { /*
  Run with `make test`.
 */
 
+#ifdef __TEST__
+
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
 
@@ -292,5 +294,5 @@ SCENARIO("Vector specification") {
         }
     }
 } // <- Vector spec
-
+#endif
 #endif
