@@ -15,3 +15,4 @@
 // --- Files to test
 #include "src_gpu/Vector.cu"
 #include "src_gpu/Container.cu"
+#include "src_gpu/Particle.cu"
