@@ -8,7 +8,7 @@ run:
 	./main_gpu.out
 
 test:
-	nvcc tests.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o tests.out && \
+	nvcc tests.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o tests.out -I. && \
 	./tests.out
 
 clean:
