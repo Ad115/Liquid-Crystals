@@ -122,7 +122,7 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
 
         if ((dr * dr) < (cutoff_radius * cutoff_radius)) {
             auto force = particles[row]
-                .force_law(&particles[column], box);
+                .interaction_force_with(particles[column], *box);
 
             for( int i=0; i<force.dimensions; ++i ){
                 atomicAdd( &particles[row].force[i], force[i] );

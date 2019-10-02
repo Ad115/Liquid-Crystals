@@ -21,6 +21,14 @@ class Particle {
         VectorT velocity;
         VectorT force;
 
+        template< typename ContainerT >
+        __host__ __device__
+        VectorT interaction_force_with(
+          const Particle& other, 
+          const ContainerT& box); /*
+            * Interface method, to be implemented by the subclasses.
+            */
+
         __host__ __device__
         double kinetic_energy() {
             auto& v = velocity;
