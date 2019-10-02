@@ -1,4 +1,9 @@
-class Thermostat {
+#ifndef THERMOSTAT_HEADER
+#define THERMOSTAT_HEADER
+
+#include "Transformations.cu"
+
+class Thermostat : Transformation {
 public:
 
     double setpoint;
@@ -15,7 +20,7 @@ public:
         using ParticleT = typename ParticleSystem::particle_type;
     
         return 
-            system.template measure_particles<double>( 
+            system.template measure_particles( 
                     [n=system.n_particles] __device__ (ParticleT p){ 
                         return 2./(3*n)*p.kinetic_energy(); 
                     } 
@@ -23,7 +28,7 @@ public:
      }
 
     template< typename ParticleSystem>
-    void apply(ParticleSystem& system) { 
+    void operator()(ParticleSystem& system) { 
         
         double current_temperature = measure(system);
         double correction_factor = sqrt(setpoint / current_temperature);
@@ -36,10 +41,6 @@ public:
             }
         );
     }
-
-    template< typename ParticleSystem>
-    void operator()(ParticleSystem& system) { 
-        
-        (*this).apply(system);
-    }
 };
+
+#endif

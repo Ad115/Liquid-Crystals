@@ -124,14 +124,14 @@ class ParticleSystem
           particles{thrust::device_vector<ParticleT>(n)},
           box{pow(n/numeric_density, 1./dimensions)} {};
 
-    template <typename MeasurementUnit, typename MeasureFn>
-    MeasurementUnit measure_particles(MeasureFn measure_fn) {
+    template <typename MeasureFn>
+    double measure_particles(MeasureFn measure_fn) {
         return 
             thrust::transform_reduce(
                     particles.begin(), particles.end(), 
                     measure_fn,
                     0.,
-                    thrust::plus<MeasurementUnit>{}
+                    thrust::plus<double>{}
             );
     }
 
@@ -144,6 +144,20 @@ class ParticleSystem
         );
 
         return particle_fn;
+    }
+
+    template<typename TransformationT>
+    TransformationT apply(TransformationT transformation) {
+        transformation(*this);
+        return transformation;
+    }
+
+    void simulation_step(double dt) {
+        integrator(dt);
+    }
+    
+    void simulation_init() {
+        (*this).apply(initial_conditions{});
     }
 
     void integrator(double dt) { /*
@@ -216,14 +230,6 @@ class ParticleSystem
         // Update forces
         
         force_kernel<<<grid_size,block_size>>>(particles_ptr, n_particles, box_ptr);
-    }
- 
-    void simulation_step(double dt) {
-        integrator(dt);
-    }
-    
-    void simulation_init() {
-        initial_conditions::apply(*this);
     }
 
     void print() {

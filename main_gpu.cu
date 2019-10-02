@@ -32,7 +32,7 @@ int main(void)
   system.simulation_init();
 
 	printf("Initial system temperature: %lf\n", thermostat.measure(system));
-  thermostat.apply(system);
+  system.apply(thermostat);
 	printf("Corrected system temperature: %lf\n", thermostat.measure(system));
 
   //system.print();
@@ -52,7 +52,7 @@ int main(void)
 		    system.simulation_step(time_step);
 
         thermostat.setpoint += 5e-2;
-		    //thermostat.apply(system);
+		    //system.apply(thermostat);
 
         t += time_step;
 

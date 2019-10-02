@@ -1,3 +1,15 @@
+#ifndef TRANSFORMATIONS_HEADER
+#define TRANSFORMATIONS_HEADER
+
+class Transformation {
+public:
+
+    template<typename SystemT>
+    void operator()(SystemT& s); /*
+    * Apply the given transformation.
+    */
+};
+
 template <typename VectorT>
 __host__ __device__ 
 VectorT cubic_lattice_position(
@@ -62,12 +74,12 @@ void init_kernel(ParticleT *particles, int n, ContainerT *box) {
     }
 }
 
-class initial_conditions {
+class initial_conditions: public Transformation {
 
 public:
 
     template<typename ParticleSystemT>
-    static void apply(ParticleSystemT& s) {
+    void operator()(ParticleSystemT& s) {
 
         using particle_t = typename ParticleSystemT::particle_type;
         using container_t = typename ParticleSystemT::container_type;
@@ -81,3 +93,5 @@ public:
         init_kernel<<<grid_size,block_size>>>(particles_ptr, s.n_particles, box_ptr);
     }
 };
+
+#endif
