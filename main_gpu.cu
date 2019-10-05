@@ -16,7 +16,7 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 #include "src_gpu/LennardJones.cu"
 #include "src_gpu/core/Vector.cu"
 #include "src_gpu/Thermostat.cu" 
-#include "src_gpu/core/Integrator.cu"
+#include "src_gpu/VelocityVertletIntegrator.cu"
 
 #include <fstream>
 
@@ -43,7 +43,7 @@ int main(void)
   double time_step = 0.0000001;
   double sample_period = 0.0000005;
 
-  VelocityVertletIntegrator integrator;
+  auto integration_method = VelocityVertlet{};
   
    double t = 0;
    for (int i=0; i<simulation_steps; i++) {
@@ -53,7 +53,7 @@ int main(void)
             t = 0;
         }
 
-		    system.simulation_step(time_step, integrator);
+		    system.simulation_step(time_step, integration_method);
 
         thermostat.setpoint += 5e-2;
 		    //system.apply(thermostat);
