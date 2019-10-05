@@ -66,20 +66,19 @@ class Simulation {
             *   -> callback for step corrections.
             *   REPEAT.
             */
-            sampler(); // <-- Sample the starting conditions.
 
             double t = 0;
-            for (int i=0; i<simulation_steps; i++) {
+            for (int step=0; step<simulation_steps; step++) {
 
                 if(t > sample_period) {
-                    sampler();
+                    sampler(step);
                     t = 0;
                 }
 
                 system.simulation_step(time_step);
                 t += time_step;
 
-                step_modifier();
+                step_modifier(step);
             }
         }
 };

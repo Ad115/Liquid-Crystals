@@ -56,6 +56,13 @@ class Vector {
     }
 
     __host__ __device__ 
+    Vector<Size, Type> operator*=(const double& r){
+        for (int i=0; i<Size; i++) 
+            (*this)[i] *= r;
+        return *this;
+    }
+
+    __host__ __device__ 
     Vector<Size, Type> operator+(const Vector<Size, Type>& other) const { /*
         * Component-wise addition:
         * (v1 + v2)[i] == v1[i] + v2[i]

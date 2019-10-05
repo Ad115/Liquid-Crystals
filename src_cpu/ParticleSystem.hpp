@@ -144,8 +144,7 @@ ParticleSystem<ParticleClass, ContainerClass>::ParticleSystem(
                 double numeric_density // Initial numeric density (particles/volume)
     )
     : particles(n_particles, ParticleClass(dimensions)),
-      _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) 
-    {};
+      _container( dimensions, pow(n_particles/numeric_density, 1/3.) ) {};
 
 template< typename ParticleClass, typename ContainerClass >
 template< typename Initializer >
@@ -287,7 +286,7 @@ void ParticleSystem<ParticleClass, ContainerClass>::integrator(double dt){ /*
     */
 
     // --- First half step ---
-    map_to_particles([dt, &box=container()](ParticleClass& p){
+    map_to_particles([dt, box=container()](ParticleClass& p){
 
             // r(t+dt) = r(t) + v(t)*dt + 1/2*f*dt^2
             p.position = p.position + dt * p.velocity + 1/2.*dt*dt*p.force;
@@ -344,12 +343,13 @@ std::ostream& operator<<(std::ostream& stream,
 
     stream << "\"container\": " << sys.container() << ", ";
 
-    stream << "\"particles\": [";
-    std::copy(std::begin(sys.particles), std::end(sys.particles)-1, 
-              std::ostream_iterator<ParticleClass>(stream, ", "));
+    stream << "\"particles\": {";
+    for (int i=0; i<sys.n_particles()-1; ++i) {
+        stream << i << ":" << sys.particles[i] << ", ";
+    }
 
-    stream << sys.particles.back() 
-           << "]";
+    stream << sys.n_particles()-1 << ":" << sys.particles.back()
+           << "}";
 
     stream << "}";
 

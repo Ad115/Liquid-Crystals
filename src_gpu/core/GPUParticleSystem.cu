@@ -16,12 +16,12 @@ kernel.
 #include <thrust/device_vector.h>
 #include "device_obj.cu"
 #include "Particle.cu"
-#include "../EmptySpace.cu"
+#include "src_gpu/PeriodicBoundaryBox.cu"
 #include "interfaces/ParticleSystem.h"
 
 template< 
     typename ParticleT=Particle<>, 
-    typename ContainerT=EmptySpace<> 
+    typename ContainerT=PeriodicBoundaryBox<> 
 >
 class GPUParticleSystem : public ParticleSystem<ParticleT, ContainerT> {
 
@@ -73,29 +73,33 @@ class GPUParticleSystem : public ParticleSystem<ParticleT, ContainerT> {
     double measure_particles(MeasureFn measure_fn) {
         return 
             thrust::transform_reduce(
-                    particles.begin(), particles.end(), 
-                    measure_fn,
-                    0.,
-                    thrust::plus<double>{}
+                particles.begin(), particles.end(), 
+                measure_fn,
+                0.,
+                thrust::plus<double>{}
             );
     }
 
     friend std::ostream& operator<<(
-        std::ostream& stream, 
-        GPUParticleSystem<ParticleT, ContainerT>& sys) {
-        stream 
-            << "Container: \n\t"
-            << sys.box.get() << "\n";
+      std::ostream& stream, 
+      GPUParticleSystem<ParticleT, ContainerT>& sys) {
+
+        stream << "GPUParticleSystem{";
+
+            stream << "\"container\": " << *(sys.box) << ", ";
         
-        thrust::host_vector<ParticleT> p(sys.particles);
+            thrust::host_vector<ParticleT> p(sys.particles);
 
-        stream << "Particles: \n";
-        for (int i=0; i<sys.n_particles; i++) {
-            stream 
-                << i << ":\t" 
-                << p[i] << "\n";
-        }
+            stream << "\"particles\": {";
+                for (int i=0; i<sys.n_particles-1; ++i) {
+                    stream << i << ": " << sys.particles[i] << ", ";
+                }
 
+                stream << sys.n_particles-1 << ":" << sys.particles.back()
+                    << "}";
+        
+            stream << "}";
+        
         return stream;
     }
 

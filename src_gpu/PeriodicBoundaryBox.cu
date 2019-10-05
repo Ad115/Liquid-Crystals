@@ -56,11 +56,9 @@ class PeriodicBoundaryBox : public Container<VectorT> {
         std::ostream& stream, 
         const PeriodicBoundaryBox<VectorT>& box) {
 
-        stream << "PeriodicBoundary{";
-        for (int i=0; i < box.dimensions-1; i++)
-            stream << box.side_length << ", ";
-                    
-        stream << box.side_length << '}';
+        stream << "PeriodicBoundaryBox{"
+            << box.side_length 
+        << '}';
         return stream;
     }
 };

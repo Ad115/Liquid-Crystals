@@ -27,7 +27,7 @@ VectorT cubic_lattice_position(
   int n_particles) {
 
     // No. of particles along every side of the cube
-    long cube_length = ceil(pow(n_particles, 1./VectorT::dimensions));
+    int cube_length = ceil(pow(n_particles, 1./VectorT::dimensions));
     // The lowest integer such that cube_length^DIMENSIONS >= n. 
     // Think of a cube with side cube_length where all particles 
     // are evenly spaced on a simple grid.
@@ -35,7 +35,7 @@ VectorT cubic_lattice_position(
     VectorT position;
     for (int D=0; D<position.dimensions; D++) {
          // Get position in a hypercube with volume = cube_length^DIMENSIONS.
-        position[D] = ( (int)(particle_idx / pow(cube_length, D)) % cube_length );
+        position[D] = ((int)( (particle_idx / pow(cube_length, D)) )%cube_length);
         // Rescale to a box of volume = L^DIMENSIONS
         position[D] *= (side_length/cube_length) * 0.9;  // Make the cube be as big as the box.
                                                 // ^^ This last factor rescales the cube.
@@ -47,11 +47,14 @@ template <typename VectorT, typename RandomEngine>
 __host__ __device__ 
 VectorT random_velocity(RandomEngine rng) {
 
-    thrust::normal_distribution<double> norm(0., 1.);
+    // Create random numbers with mean zero and variance 1
+    //thrust::normal_distribution<double> norm(0., 1.);
+    // Create random numbers in the range [-2,2)
+    thrust::uniform_real_distribution<double> unif(-2., 2.);
 
     VectorT velocity;
         for (int i=0; i<velocity.dimensions; i++) {
-            float random_value = norm(rng);
+            float random_value = unif(rng);
             velocity[i] = random_value;
         }
     return velocity;
@@ -68,15 +71,15 @@ void init_kernel(ParticleT *particles, int n, ContainerT *box) {
         double L = (*box).side_length;
         using vector_type = typename ParticleT::vector_type;
 
+        // Instantiate random number engine
+        thrust::default_random_engine rng(index*1000 + index*index);
+        rng.discard(index);
+
         // Set particle position        
         //auto position = random_position<vector_type>(index, L, rng);
         auto position = cubic_lattice_position<vector_type>(index, L, n);
         particles[index].position = (*box).apply_boundary_conditions(position);
         
-
-        // Instantiate random number engine
-        thrust::default_random_engine rng(index*1000 + index*index);
-        rng.discard(index);
 
         // Set particle velocity
         particles[index].velocity = random_velocity<vector_type>(rng);

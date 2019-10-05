@@ -8,14 +8,6 @@ template <typename ParticleT, typename ContainerT>
 __global__ 
 void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box);
 
-template <typename ParticleT, typename ContainerT>
-__global__                                                       
-void update_positions_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
-
-template <typename ParticleT, typename ContainerT>
-__global__                                                       
-void update_velocities_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
-
 
 class VelocityVertlet: Integrator {
 
@@ -101,14 +93,6 @@ public:
         
         auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
         auto n_particles = s.n_particles;
-      
-        unsigned int block_size = 1024;
-        
-        // Esta wea si funciona 
-        dim3 grid_size( 
-                n_particles,
-                n_particles / block_size + ( n_particles % block_size == 0 ? 0:1 ) 
-             );  
         
         // Launch the kernel! As you can see we are not copying memory from CPU to GPU
         // as you would normally do with cudaMemcpy(), as we don't need to! The
@@ -117,8 +101,9 @@ public:
         // the device vector with the ::operator[]() i.e. poarticles[2] and that would
         // do all the memory copying for us!
 
-        // Update forces
-        update_forces_kernel<<<grid_size,block_size>>>(
+        unsigned int block_size = 1024;
+        unsigned int threads_per_block = 1024;
+        update_forces_kernel<<<block_size,threads_per_block>>>(
             particles_ptr, n_particles, 
             box_ptr
         );
@@ -131,30 +116,41 @@ public:
 
 };
 
+
+template<class vector_t>
+__device__ double magnitude(vector_t v) {
+    return sqrt(v*v);
+}
+
 template <typename ParticleT, typename ContainerT>
 __global__ 
 void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
-    unsigned int row = blockIdx.x;
-    unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
 
-    if( column > row && column < n_particles ){
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
+        i < n_particles*n_particles; 
+        i += blockDim.x * gridDim.x) {
+
+        int row = i/n_particles;
+        int column = i % n_particles;
+
+        if (column > row) {
         
-        double cutoff_radius = 3.5;
-        auto dr = box->distance_vector(
-            particles[row].position, 
-            particles[column].position
-        );
+            double cutoff_radius = 3.5;
+            auto dr = (*box).distance_vector(
+                particles[row].position, 
+                particles[column].position
+            );
 
-        if ((dr * dr) < (cutoff_radius * cutoff_radius)) {
-            auto force = particles[row]
-                .interaction_force_with(particles[column], *box);
+            if (magnitude(dr) < cutoff_radius) {
+                auto force = particles[row]
+                    .interaction_force_with(particles[column], *box);
 
-            for( int i=0; i<force.dimensions; ++i ){
-                atomicAdd( &(particles[row].force[i]), force[i] );
-                atomicAdd( &(particles[column].force[i]), -force[i] );
-            }  
+                for( int i=0; i<force.dimensions; ++i ){
+                    atomicAdd( &(particles[row].force[i]), force[i] );
+                    atomicAdd( &(particles[column].force[i]), -force[i] );
+                }  
+            }
         }
-        
     }
 }
 

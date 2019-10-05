@@ -22,40 +22,46 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 #include <iostream>
 
 using LJSystem = GPUParticleSystem<
-  LennardJones<>,
-  PeriodicBoundaryBox<>
+    LennardJones<>,
+    PeriodicBoundaryBox<>
 >;
 
 int main(void)
 {
-  int n_particles = 200;
-  double numeric_density = 0.5;
-  Temperature thermostat{5e2};
+    int n_particles = 100;
+    double numeric_density = 0.05;
+    Temperature thermostat{5.};
 
-  std::ofstream outputf("output.xyz");
+    std::ofstream outputf("output.xyz");
 
-  LJSystem system(n_particles, numeric_density);
-  system.simulation_init(initial_conditions{});
+    LJSystem system(n_particles, numeric_density);
+    system.simulation_init(initial_conditions{});
 
-	//std::cout << "Initial system temperature: " << Temperature::measure(system) << std::endl;
-  //system.apply(thermostat);
-  //std::cout << "Corrected system temperature: " << Temperature::measure(system) << std::endl;
+    system.apply(thermostat);
+
+    // Print the system's initial state
+    std::cout << system << std::endl;
+    std::cout 
+            << 0 << " temperature: "
+            << Temperature::measure(system)
+            << std::endl;
 
 
-  //std::cout << system;
+    int simulation_steps = 100; // understand it as "frames", how many steps in time
+    double time_step = 0.1;
+    double sample_period = 0.01;
 
-  int simulation_steps = 15000;    // understand it as "frames", how many steps in time
-  double time_step = 1e-10;
-  double sample_period = 1e-10;
-
-  auto integration_method = VelocityVertlet{};
-  
-   double t = 0;
-   for (int i=0; i<simulation_steps; i++) {
-	   
-	   if(t > sample_period) {
+    auto integration_method = VelocityVertlet{};
+    
+    // --- simulation loop
+    double t = 0;
+    for (int i=0; i<simulation_steps; i++) {
+         
+        if(t > sample_period) {
             system.write_xyz(outputf);
-            std::cout << i << " temperature " << Temperature::measure(system) << std::endl;
+            std::cout << i 
+                << " temperature " << Temperature::measure(system) 
+                << std::endl;
             t = 0;
         }
 
@@ -66,6 +72,6 @@ int main(void)
 
         t += time_step;
     }
-  
-  //std::cout << system;
+    
+    //std::cout << system;
 }
