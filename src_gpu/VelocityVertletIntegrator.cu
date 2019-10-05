@@ -3,17 +3,18 @@
 
 #include "core/interfaces/Integrator.h"
 
+
 template <typename ParticleT, typename ContainerT>
 __global__ 
-void force_kernel(ParticleT *particles, int n_particles, ContainerT *box);
+void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box);
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
-void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
+void update_positions_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
-void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
+void update_velocities_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
 
 
 class VelocityVertlet: Integrator {
@@ -33,18 +34,19 @@ public:
         */
 
         // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
+        update_positions(system);
         // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
-        first_half_step(system);
+        update_velocities(system);
 
         // r(t + dt)  -->  f(t + dt)
         update_forces(system);
 
         // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
-        second_half_step(system);
+        update_velocities(system);
     }
 
     template<typename SystemT>
-    void first_half_step(SystemT& s) {
+    void update_positions(SystemT& s) {
 
         auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
         auto box_ptr = s.box.device_ptr();
@@ -53,7 +55,7 @@ public:
         unsigned int block_size = 1024;
         unsigned int grid_size = n_particles / block_size + 1;
         
-        first_half_kernel<<<grid_size,block_size>>>(
+        update_positions_kernel<<<grid_size,block_size>>>(
             particles_ptr, n_particles, 
             box_ptr, 
             time_step
@@ -61,8 +63,8 @@ public:
     }
 
     template<typename SystemT>
-    void second_half_step(SystemT& s) {
-        
+    void update_velocities(SystemT& s) {
+
         auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
         auto box_ptr = s.box.device_ptr();
         auto n_particles = s.n_particles;
@@ -70,13 +72,12 @@ public:
         unsigned int block_size = 1024;
         unsigned int grid_size = n_particles / block_size + 1;
         
-        second_half_kernel<<<grid_size,block_size>>>(
+        update_velocities_kernel<<<grid_size,block_size>>>(
             particles_ptr, n_particles, 
             box_ptr, 
             time_step
         );
     }
-
     
     template<typename SystemT>
     void update_forces(SystemT& s) {
@@ -105,7 +106,7 @@ public:
         // do all the memory copying for us!
 
         // Update forces
-        force_kernel<<<grid_size,block_size>>>(
+        update_forces_kernel<<<grid_size,block_size>>>(
             particles_ptr, n_particles, 
             box_ptr
         );
@@ -120,7 +121,7 @@ public:
 
 template <typename ParticleT, typename ContainerT>
 __global__ 
-void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
+void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
     unsigned int row = blockIdx.x;
     unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
 
@@ -153,34 +154,43 @@ void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
 }
 
 template <typename ParticleT, typename ContainerT>
-__global__                                                       
-void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt) {
+__global__
+void update_positions_kernel(
+  ParticleT *particles, 
+  int n_particles, 
+  ContainerT *box, 
+  double dt) {
+
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
     if (index < n_particles){
+
+        auto& particle = particles[index];
         
-          // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
-          auto particle = particles[index];
-          auto dr = particle.velocity*dt + 0.5*particle.force*dt*dt;
-          auto new_pos = particle.position + dr;
+        // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
+        auto dr = particle.velocity*dt + 0.5*particle.force*dt*dt;
+        auto new_pos = particle.position + dr;
 
-          particles[index].position = (*box).apply_boundary_conditions(new_pos); 
-
-          // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
-          auto dv = 0.5*particle.force*dt;
-          //print_vector( &dv );
-          particles[index].velocity += 0.5*particle.force*dt;
+        particle.position = (*box).apply_boundary_conditions(new_pos); 
     }
 }            
 
 template <typename ParticleT, typename ContainerT>
-__global__                                                       
-void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt)  {
+__global__
+void update_velocities_kernel(
+  ParticleT *particles, 
+  int n_particles, 
+  ContainerT *box, 
+  double dt) {
+
     unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
     if (index < n_particles){
         
-          // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
-          auto particle = particles[index];
-          particles[index].velocity += 0.5*particle.force*dt;
+        auto& particle = particles[index];
+
+        // v(t + dt) = v(t) + 1/2*f(t + dt)*dt
+        auto dv = 0.5*particle.force*dt;
+
+        particle.velocity = particle.velocity + dv;
     }
 }
 
