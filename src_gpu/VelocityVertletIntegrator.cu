@@ -1,7 +1,7 @@
 #ifndef VELOCITY_VERTLET_INTEGRATOR_HEADER
 #define VELOCITY_VERTLET_INTEGRATOR_HEADER
 
-#include "core/Integrator.cu"
+#include "core/IntegratorInterface.h"
 
 template <typename ParticleT, typename ContainerT>
 __global__ 

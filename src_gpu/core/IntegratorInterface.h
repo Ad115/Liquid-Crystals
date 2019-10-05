@@ -1,7 +1,7 @@
-#ifndef INTEGRATOR_HEADER
-#define INTEGRATOR_HEADER
+#ifndef INTEGRATOR_INTERFACE_HEADER
+#define INTEGRATOR_INTERFACE_HEADER
 
-#include "Transformations.cu"
+#include "TransformationInterface.h"
 
 
 class Integrator: Transformation {

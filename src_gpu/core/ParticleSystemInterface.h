@@ -1,9 +1,11 @@
+#ifndef PARTICLE_SYSTEM_INTERFACE
+#define PARTICLE_SYSTEM_INTERFACE
+
 #include <iostream>
 
 template< typename ParticleT, typename ContainerT>
-class ParticleSystem
-{
-protected:
+class ParticleSystem {
+ protected:
     ParticleSystem() = default; // <-- Not a part of the interface
 
  public:
@@ -54,3 +56,5 @@ protected:
 
 template<typename ParticleT, typename ContainerT>
 constexpr int ParticleSystem<ParticleT, ContainerT>::dimensions;
+
+#endif

@@ -59,7 +59,7 @@ public:
 #include "doctest.h"
 #include <typeinfo>   // typeid
 #include <math.h> // sqrt, pow
-#include "core/Container.cu"
+#include "core/EmptySpace.cu"
 
 SCENARIO("Lennard-Jones particle specification") {
 

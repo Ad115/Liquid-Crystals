@@ -1,7 +1,7 @@
 #ifndef INITIAL_CONDITIONS_HEADER
 #define INITIAL_CONDITIONS_HEADER
 
-#include "core/Transformations.cu"
+#include "core/TransformationInterface.h"
 #include <thrust/random.h>
 
 template <typename VectorT, typename RandomEngine>

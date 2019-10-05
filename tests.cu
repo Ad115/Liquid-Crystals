@@ -14,7 +14,10 @@
 
 // --- Files to test
 #include "src_gpu/core/Vector.cu"
-#include "src_gpu/core/Container.cu"
+
+#include "src_gpu/core/ContainerInterface.h"
+#include "src_gpu/core/EmptySpace.cu"
 #include "src_gpu/PeriodicBoundaryBox.cu"
+
 #include "src_gpu/core/Particle.cu"
 #include "src_gpu/LennardJones.cu"
