@@ -31,7 +31,7 @@ constexpr int Container<VectorT>::dimensions;
 #ifdef __TESTING__
 
 #include "doctest.h"
-#include "Vector.cu"
+#include "src_gpu/core/Vector.cu"
 #include <typeinfo>   // operator typeid
 
 SCENARIO("Container specification") {

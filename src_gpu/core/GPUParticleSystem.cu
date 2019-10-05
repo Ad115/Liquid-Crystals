@@ -17,7 +17,7 @@ kernel.
 #include "device_obj.cu"
 #include "Particle.cu"
 #include "EmptySpace.cu"
-#include "ParticleSystemInterface.h"
+#include "interfaces/ParticleSystem.h"
 
 template< 
     typename ParticleT=Particle<>, 

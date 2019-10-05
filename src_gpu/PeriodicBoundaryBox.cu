@@ -2,7 +2,7 @@
 #define PERIODIC_BOUNDARY_BOX_HEADER
 
 #include "core/Vector.cu"
-#include "core/ContainerInterface.h"
+#include "core/interfaces/Container.h"
 
 template< typename VectorT=Vector<> >
 class PeriodicBoundaryBox : public Container<VectorT> {

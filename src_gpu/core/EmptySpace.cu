@@ -9,7 +9,7 @@ vivir en el Device.
 #ifndef EMPTY_SPACE_HEADER
 #define EMPTY_SPACE_HEADER
 
-#include "ContainerInterface.h"
+#include "interfaces/Container.h"
 #include "Vector.cu"
 
 
