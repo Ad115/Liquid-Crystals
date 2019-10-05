@@ -82,23 +82,23 @@ class ParticleSystem
         this->apply(integrator);
     }
 
-    void print() {
-        printf("Container: \n\t");
-
-        box.get();
-        print_container(box.raw_ptr());
-
-        printf("\n");
+    friend std::ostream& operator<<(
+        std::ostream& stream, 
+        ParticleSystem<ParticleT, ContainerT>& sys) {
+        stream 
+            << "Container: \n\t"
+            << sys.box.get() << "\n";
         
-        thrust::host_vector<ParticleT> p(particles);
+        thrust::host_vector<ParticleT> p(sys.particles);
 
-        printf("Particles: \n");
-        for (int i=0; i<n_particles; i++) {
-            printf("%d:\t", i);
-            print_particle( &(p[i]) );
-            printf("\n");
+        stream << "Particles: \n";
+        for (int i=0; i<sys.n_particles; i++) {
+            stream 
+                << i << ":\t" 
+                << p[i] << "\n";
         }
 
+        return stream;
     }
 
     void write_xyz(std::ostream& stream) { /*

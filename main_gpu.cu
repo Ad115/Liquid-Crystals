@@ -19,6 +19,7 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 #include "src_gpu/Thermostat.cu" 
 
 #include <fstream>
+#include <iostream>
 
 using LJSystem = ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>>;
 
@@ -37,7 +38,7 @@ int main(void)
   system.apply(thermostat);
 	printf("Corrected system temperature: %lf\n", thermostat.measure(system));
 
-  //system.print();
+  //std::cout << system;
 
   int simulation_steps = 15000;    // understand it as "frames", how many steps in time
   double time_step = 0.0000001;
@@ -63,5 +64,5 @@ int main(void)
         printf("%d : temperature %lf\n", i, thermostat.measure(system));
     }
   
- //system.print();
+  std::cout << system;
 }
