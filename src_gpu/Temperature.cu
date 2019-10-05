@@ -3,12 +3,12 @@
 
 #include "core/interfaces/Transformation.h"
 
-class Thermostat : Transformation {
+class Temperature : Transformation {
 public:
 
     double setpoint;
 
-    Thermostat(double setpoint)
+    Temperature(double setpoint)
      : setpoint(setpoint)
      {}
 
@@ -19,12 +19,13 @@ public:
             */
         using ParticleT = typename ParticleSystem::particle_type;
     
-        return 
-            system.template measure_particles( 
-                    [n=system.n_particles] __device__ (ParticleT p){ 
-                        return 2./(3*n)*p.kinetic_energy(); 
-                    } 
+        double total_kinetic_energy = system.measure_particles( 
+                [] __device__ (ParticleT p){ 
+                    return p.kinetic_energy(); 
+                } 
             );
+        
+        return 2./(3*system.n_particles) * total_kinetic_energy;
      }
 
     template< typename ParticleSystem>
@@ -33,10 +34,10 @@ public:
         double current_temperature = measure(system);
         double correction_factor = sqrt(setpoint / current_temperature);
 
-        using ParticleT = typename ParticleSystem::particle_type;
+        using particle_t = typename ParticleSystem::particle_type;
 
         system.map_to_particles(
-            [correction_factor] __device__ (ParticleT& p){
+            [correction_factor] __device__ (particle_t& p){
                 p.velocity = correction_factor * p.velocity;
             }
         );
