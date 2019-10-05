@@ -17,4 +17,4 @@ test: compile # "It compiles" is a good first test
 	./tests.out
 
 clean:
-	rm *.out *.o --verbose -f
+	rm *.out *.o *.xyz --verbose -f
