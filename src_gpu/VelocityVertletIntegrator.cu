@@ -46,48 +46,60 @@ public:
     }
 
     template<typename SystemT>
-    void update_positions(SystemT& s) {
+    void update_positions(SystemT& system) {
 
-        auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
-        auto box_ptr = s.box.device_ptr();
-        auto n_particles = s.n_particles;
-
-        unsigned int block_size = 1024;
-        unsigned int grid_size = n_particles / block_size + 1;
+        auto box_ptr = system.box.device_ptr();
         
-        update_positions_kernel<<<grid_size,block_size>>>(
-            particles_ptr, n_particles, 
-            box_ptr, 
-            time_step
+        using particle_t = typename SystemT::particle_type;
+
+        system.map_to_particles(
+            [box_ptr, dt=time_step] __device__ (particle_t& p){
+
+                // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
+                auto new_pos = p.position + p.velocity*dt + 0.5*p.force*dt*dt;
+
+                p.position = (*box_ptr).apply_boundary_conditions(new_pos); 
+            }
         );
     }
 
     template<typename SystemT>
-    void update_velocities(SystemT& s) {
+    void update_velocities(SystemT& system) {
 
-        auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
-        auto box_ptr = s.box.device_ptr();
-        auto n_particles = s.n_particles;
-
-        unsigned int block_size = 1024;
-        unsigned int grid_size = n_particles / block_size + 1;
+        auto box_ptr = system.box.device_ptr();
         
-        update_velocities_kernel<<<grid_size,block_size>>>(
-            particles_ptr, n_particles, 
-            box_ptr, 
-            time_step
+        using particle_t = typename SystemT::particle_type;
+
+        system.map_to_particles(
+            [box_ptr, dt=time_step] __device__ (particle_t& p){
+
+                // v(t + dt) = v(t) + 1/2*f(t + dt)*dt
+                p.velocity = p.velocity + 0.5*p.force*dt;
+            }
         );
     }
     
     template<typename SystemT>
     void update_forces(SystemT& s) {
+
+        auto box_ptr = s.box.device_ptr();
+        using particle_t = typename SystemT::particle_type;
+        using vector_t = typename particle_t::vector_type;
+
+        // First, reset forces
+        s.map_to_particles(
+            [box_ptr] __device__ (particle_t& p){
+
+                p.force = vector_t::null();
+            }
+        );
+
         // As we cannot send device vectors to the kernel (as device_vector is at
         // the end of the day a GPU structure abstraction in CPU) we have to get the
         // pointer to GPU memory in order for the kernel to know where to start 
         // reading the particle array from.
         
         auto particles_ptr = thrust::raw_pointer_cast(s.particles.data());
-        auto box_ptr = s.box.device_ptr();
         auto n_particles = s.n_particles;
       
         unsigned int block_size = 1024;
@@ -125,13 +137,6 @@ void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box
     unsigned int row = blockIdx.x;
     unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
 
-    // Reset the forces
-    if(column == 0) {
-        particles[row].force = 0.;
-    }
-
-    __syncthreads();
-
     if( column > row && column < n_particles ){
         
         double cutoff_radius = 3.5;
@@ -145,53 +150,13 @@ void update_forces_kernel(ParticleT *particles, int n_particles, ContainerT *box
                 .interaction_force_with(particles[column], *box);
 
             for( int i=0; i<force.dimensions; ++i ){
-                atomicAdd( &particles[row].force[i], force[i] );
-                atomicAdd( &particles[column].force[i], -force[i] );
+                atomicAdd( &(particles[row].force[i]), force[i] );
+                atomicAdd( &(particles[column].force[i]), -force[i] );
             }  
         }
         
     }
 }
 
-template <typename ParticleT, typename ContainerT>
-__global__
-void update_positions_kernel(
-  ParticleT *particles, 
-  int n_particles, 
-  ContainerT *box, 
-  double dt) {
-
-    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n_particles){
-
-        auto& particle = particles[index];
-        
-        // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
-        auto dr = particle.velocity*dt + 0.5*particle.force*dt*dt;
-        auto new_pos = particle.position + dr;
-
-        particle.position = (*box).apply_boundary_conditions(new_pos); 
-    }
-}            
-
-template <typename ParticleT, typename ContainerT>
-__global__
-void update_velocities_kernel(
-  ParticleT *particles, 
-  int n_particles, 
-  ContainerT *box, 
-  double dt) {
-
-    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n_particles){
-        
-        auto& particle = particles[index];
-
-        // v(t + dt) = v(t) + 1/2*f(t + dt)*dt
-        auto dv = 0.5*particle.force*dt;
-
-        particle.velocity = particle.velocity + dv;
-    }
-}
 
 #endif
