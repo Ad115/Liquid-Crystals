@@ -1,14 +1,19 @@
-#ifndef TRANSFORMATIONS_HEADER
-#define TRANSFORMATIONS_HEADER
+#include "Transformations.cu"
 
-class Transformation {
-public:
+template <typename VectorT, typename RandomEngine>
+__host__ __device__ 
+VectorT random_position(unsigned int particle_idx, double side_length, RandomEngine rng) {
+    // Create random numbers in the range [0,L)
+    thrust::uniform_real_distribution<double> unif(0, side_length);
 
-    template<typename SystemT>
-    void operator()(SystemT& s); /*
-    * Apply the given transformation.
-    */
-};
+    VectorT position;
+    for (int i=0; i<position.dimensions; i++) {
+        float random_value = unif(rng);
+        position[i] = random_value;
+    }
+
+    return position;
+}
 
 template <typename VectorT>
 __host__ __device__ 
@@ -93,5 +98,3 @@ public:
         init_kernel<<<grid_size,block_size>>>(particles_ptr, s.n_particles, box_ptr);
     }
 };
-
-#endif

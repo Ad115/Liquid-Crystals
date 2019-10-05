@@ -20,22 +20,8 @@ kernel.
 #include "Container.cu"
 #include "device_obj.cu"
 #include "Transformations.cu"
+#include "InitialConditions.cu"
 
-
-template <typename VectorT, typename RandomEngine>
-__host__ __device__ 
-VectorT random_position(unsigned int particle_idx, double side_length, RandomEngine rng) {
-    // Create random numbers in the range [0,L)
-    thrust::uniform_real_distribution<double> unif(0, side_length);
-
-    VectorT position;
-    for (int i=0; i<position.dimensions; i++) {
-        float random_value = unif(rng);
-        position[i] = random_value;
-    }
-
-    return position;
-}
 
 
 template <typename ParticleT, typename ContainerT>
@@ -104,7 +90,7 @@ void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, 
     }
 }            
 
-template< typename ParticleT=Particle<>, typename ContainerT=PeriodicBoundaryBox<> >
+template< typename ParticleT=Particle<>, typename ContainerT=EmptySpace<> >
 class ParticleSystem
 {
 

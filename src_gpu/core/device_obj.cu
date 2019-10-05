@@ -1,5 +1,3 @@
-
-
 /* 
 ## Clase `device_obj`
 

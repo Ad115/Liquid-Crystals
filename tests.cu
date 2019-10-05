@@ -13,7 +13,8 @@
 #define __TESTING__
 
 // --- Files to test
-#include "src_gpu/Vector.cu"
-#include "src_gpu/Container.cu"
-#include "src_gpu/Particle.cu"
+#include "src_gpu/core/Vector.cu"
+#include "src_gpu/core/Container.cu"
+#include "src_gpu/PeriodicBoundaryBox.cu"
+#include "src_gpu/core/Particle.cu"
 #include "src_gpu/LennardJones.cu"

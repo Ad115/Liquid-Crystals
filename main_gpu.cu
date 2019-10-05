@@ -11,9 +11,10 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 ```
 */
 
-#include "src_gpu/ParticleSystem.cu"
+#include "src_gpu/core/ParticleSystem.cu"
+#include "src_gpu/PeriodicBoundaryBox.cu"
 #include "src_gpu/LennardJones.cu"
-#include "src_gpu/Vector.cu"
+#include "src_gpu/core/Vector.cu"
 #include "src_gpu/Thermostat.cu" 
 
 #include <fstream>

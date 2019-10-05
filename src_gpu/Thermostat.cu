@@ -1,7 +1,7 @@
 #ifndef THERMOSTAT_HEADER
 #define THERMOSTAT_HEADER
 
-#include "Transformations.cu"
+#include "core/Transformations.cu"
 
 class Thermostat : Transformation {
 public:
