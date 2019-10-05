@@ -26,17 +26,18 @@ using LJSystem = GPUParticleSystem<
     PeriodicBoundaryBox<>
 >;
 
-int main(void)
-{
+int main(void) {
+
     int n_particles = 100;
     double numeric_density = 0.05;
     Temperature thermostat{5.};
 
     std::ofstream outputf("output.xyz");
 
+    // --- initialization
     LJSystem system(n_particles, numeric_density);
+    
     system.simulation_init(initial_conditions{});
-
     system.apply(thermostat);
 
     // Print the system's initial state
