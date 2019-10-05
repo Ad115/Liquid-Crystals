@@ -11,7 +11,7 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 ```
 */
 
-#include "src_gpu/core/ParticleSystem.cu"
+#include "src_gpu/core/GPUParticleSystem.cu"
 #include "src_gpu/PeriodicBoundaryBox.cu"
 #include "src_gpu/LennardJones.cu"
 #include "src_gpu/InitialConditions.cu"
@@ -21,7 +21,10 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 #include <fstream>
 #include <iostream>
 
-using LJSystem = ParticleSystem<LennardJones<>, PeriodicBoundaryBox<>>;
+using LJSystem = GPUParticleSystem<
+  LennardJones<>, 
+  PeriodicBoundaryBox<>
+>;
 
 int main(void)
 {

@@ -1,5 +1,5 @@
 /* 
-## Clase `ParticleSystem`
+## Clase `GPU ParticleSystem`
 
 Esta clase está diseñada para manejarse desde el Host(CPU), lo importante es que 
 contiene un `thrust::device_vector` de partículas, por lo que estas viven 
@@ -17,15 +17,13 @@ kernel.
 #include "device_obj.cu"
 #include "Particle.cu"
 #include "Container.cu"
-
-#include "Transformations.cu"
+#include "ParticleSystemInterface.cu"
 
 template< 
     typename ParticleT=Particle<>, 
     typename ContainerT=EmptySpace<> 
 >
-class ParticleSystem
-{
+class GPUParticleSystem : public ParticleSystem<ParticleT, ContainerT> {
 
  public:
     thrust::device_vector< ParticleT > particles;
@@ -38,32 +36,10 @@ class ParticleSystem
     using vector_type = typename ParticleT::vector_type;
     static constexpr int dimensions = ParticleT::dimensions;
 
-    ParticleSystem(unsigned int n, double numeric_density) 
+    GPUParticleSystem(unsigned int n, double numeric_density) 
         : n_particles{n},
           particles{thrust::device_vector<ParticleT>(n)},
           box{pow(n/numeric_density, 1./dimensions)} {};
-
-    template <typename MeasureFn>
-    double measure_particles(MeasureFn measure_fn) {
-        return 
-            thrust::transform_reduce(
-                    particles.begin(), particles.end(), 
-                    measure_fn,
-                    0.,
-                    thrust::plus<double>{}
-            );
-    }
-
-    template <typename ParticleFn>
-    ParticleFn map_to_particles(ParticleFn particle_fn) {
-        
-        thrust::for_each(
-            particles.begin(), particles.end(),
-            particle_fn
-        );
-
-        return particle_fn;
-    }
 
     template<typename TransformationT>
     TransformationT apply(TransformationT transformation) {
@@ -82,9 +58,31 @@ class ParticleSystem
         this->apply(integrator);
     }
 
+    template <typename ParticleFn>
+    ParticleFn map_to_particles(ParticleFn particle_fn) {
+        
+        thrust::for_each(
+            particles.begin(), particles.end(),
+            particle_fn
+        );
+
+        return particle_fn;
+    }
+
+    template <typename MeasureFn>
+    double measure_particles(MeasureFn measure_fn) {
+        return 
+            thrust::transform_reduce(
+                    particles.begin(), particles.end(), 
+                    measure_fn,
+                    0.,
+                    thrust::plus<double>{}
+            );
+    }
+
     friend std::ostream& operator<<(
         std::ostream& stream, 
-        ParticleSystem<ParticleT, ContainerT>& sys) {
+        GPUParticleSystem<ParticleT, ContainerT>& sys) {
         stream 
             << "Container: \n\t"
             << sys.box.get() << "\n";
@@ -129,4 +127,4 @@ class ParticleSystem
 };
 
 template<typename ParticleT, typename ContainerT>
-constexpr int ParticleSystem<ParticleT, ContainerT>::dimensions;
+constexpr int GPUParticleSystem<ParticleT, ContainerT>::dimensions;
