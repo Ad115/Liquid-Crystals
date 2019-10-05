@@ -1,4 +1,8 @@
-#include "Transformations.cu"
+#ifndef INITIAL_CONDITIONS_HEADER
+#define INITIAL_CONDITIONS_HEADER
+
+#include "core/Transformations.cu"
+#include <thrust/random.h>
 
 template <typename VectorT, typename RandomEngine>
 __host__ __device__ 
@@ -98,3 +102,5 @@ public:
         init_kernel<<<grid_size,block_size>>>(particles_ptr, s.n_particles, box_ptr);
     }
 };
+
+#endif

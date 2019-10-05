@@ -14,9 +14,9 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 #include "src_gpu/core/ParticleSystem.cu"
 #include "src_gpu/PeriodicBoundaryBox.cu"
 #include "src_gpu/LennardJones.cu"
-#include "src_gpu/core/Vector.cu"
-#include "src_gpu/Thermostat.cu" 
+#include "src_gpu/InitialConditions.cu"
 #include "src_gpu/VelocityVertletIntegrator.cu"
+#include "src_gpu/Thermostat.cu" 
 
 #include <fstream>
 
@@ -31,7 +31,7 @@ int main(void)
   std::ofstream outputf("output.xyz");
 
   LJSystem system(n_particles, numeric_density);
-  system.simulation_init();
+  system.simulation_init(initial_conditions{});
 
 	printf("Initial system temperature: %lf\n", thermostat.measure(system));
   system.apply(thermostat);

@@ -10,17 +10,15 @@ Falta algo para calcular la fuerza, esto probablemente se podrá hacer con otro
 kernel. 
 */
 
-#include <thrust/device_vector.h>
-#include <thrust/random.h>
+#include <iostream>
 #include <thrust/transform_reduce.h>
 #include <thrust/for_each.h>
-#include <iostream>
-#include "Particle.cu"
-#include "Vector.cu"
-#include "Container.cu"
+#include <thrust/device_vector.h>
 #include "device_obj.cu"
+#include "Particle.cu"
+#include "Container.cu"
+
 #include "Transformations.cu"
-#include "InitialConditions.cu"
 
 template< 
     typename ParticleT=Particle<>, 
@@ -73,14 +71,15 @@ class ParticleSystem
         return transformation;
     }
 
+    template<typename TransformationT>
+    void simulation_init(TransformationT initial_conditions_fn) {
+        (*this).apply(initial_conditions_fn);
+    }
+
     template<typename IntegratorT>
     void simulation_step(double dt, IntegratorT integrator) {
         integrator.time_step = dt;
         this->apply(integrator);
-    }
-    
-    void simulation_init() {
-        (*this).apply(initial_conditions{});
     }
 
     void print() {
