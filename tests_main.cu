@@ -20,4 +20,4 @@
 #include "src_gpu/PeriodicBoundaryBox.cu"
 
 #include "src_gpu/core/Particle.cu"
-#include "src_gpu/LennardJones.cu"
+#include "src_gpu/LennardJonesParticle.cu"

@@ -13,7 +13,7 @@ nvcc main_gpu.cu -std=c++11 -arch=sm_75 --expt-extended-lambda
 
 #include "src_gpu/core/GPUParticleSystem.cu"
 #include "src_gpu/PeriodicBoundaryBox.cu"
-#include "src_gpu/LennardJones.cu"
+#include "src_gpu/LennardJonesParticle.cu"
 #include "src_gpu/InitialConditions.cu"
 #include "src_gpu/VelocityVertletIntegrator.cu"
 #include "src_gpu/Temperature.cu" 
