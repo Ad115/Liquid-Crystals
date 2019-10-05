@@ -35,11 +35,11 @@ class device_obj {
          );
      }
     
-    T *device_ptr() {
+    T *device_ptr() const {
         return device_pointer;
     }
     
-    T *raw_ptr() {
+    T *raw_ptr() const {
         return device_pointer;
     }
     
