@@ -16,7 +16,7 @@ kernel.
 #include <thrust/device_vector.h>
 #include "device_obj.cu"
 #include "Particle.cu"
-#include "EmptySpace.cu"
+#include "../EmptySpace.cu"
 #include "interfaces/ParticleSystem.h"
 
 template< 

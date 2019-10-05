@@ -9,8 +9,8 @@ vivir en el Device.
 #ifndef EMPTY_SPACE_HEADER
 #define EMPTY_SPACE_HEADER
 
-#include "interfaces/Container.h"
-#include "Vector.cu"
+#include "core/interfaces/Container.h"
+#include "core/Vector.cu"
 
 
 template< typename VectorT=Vector<> >
@@ -44,7 +44,7 @@ public:
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
-#include "Vector.cu"
+#include "core/Vector.cu"
 
 
 SCENARIO("Empty space specification") {

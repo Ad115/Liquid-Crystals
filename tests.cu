@@ -16,7 +16,7 @@
 #include "src_gpu/core/Vector.cu"
 
 #include "src_gpu/core/interfaces/Container.h"
-#include "src_gpu/core/EmptySpace.cu"
+#include "src_gpu/EmptySpace.cu"
 #include "src_gpu/PeriodicBoundaryBox.cu"
 
 #include "src_gpu/core/Particle.cu"

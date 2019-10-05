@@ -5,69 +5,16 @@
 
 template <typename ParticleT, typename ContainerT>
 __global__ 
-void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
-    unsigned int row = blockIdx.x;
-    unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
-
-    // Reset the forces
-    if(column == 0) {
-        particles[row].force = 0.;
-    }
-
-    __syncthreads();
-
-    if( column > row && column < n_particles ){
-        
-        double cutoff_radius = 3.5;
-        auto dr = box->distance_vector(
-            particles[row].position, 
-            particles[column].position
-        );
-
-        if ((dr * dr) < (cutoff_radius * cutoff_radius)) {
-            auto force = particles[row]
-                .interaction_force_with(particles[column], *box);
-
-            for( int i=0; i<force.dimensions; ++i ){
-                atomicAdd( &particles[row].force[i], force[i] );
-                atomicAdd( &particles[column].force[i], -force[i] );
-            }  
-        }
-        
-    }
-}
+void force_kernel(ParticleT *particles, int n_particles, ContainerT *box);
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
-void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt) {
-    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n_particles){
-        
-          // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
-          auto particle = particles[index];
-          auto dr = particle.velocity*dt + 0.5*particle.force*dt*dt;
-          auto new_pos = particle.position + dr;
-
-          particles[index].position = (*box).apply_boundary_conditions(new_pos); 
-
-          // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
-          auto dv = 0.5*particle.force*dt;
-          //print_vector( &dv );
-          particles[index].velocity += 0.5*particle.force*dt;
-    }
-}            
+void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
 
 template <typename ParticleT, typename ContainerT>
 __global__                                                       
-void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt)  {
-    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
-    if (index < n_particles){
-        
-          // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
-          auto particle = particles[index];
-          particles[index].velocity += 0.5*particle.force*dt;
-    }
-}
+void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt);
+
 
 class VelocityVertlet: Integrator {
 
@@ -170,5 +117,71 @@ public:
     }
 
 };
+
+template <typename ParticleT, typename ContainerT>
+__global__ 
+void force_kernel(ParticleT *particles, int n_particles, ContainerT *box) {
+    unsigned int row = blockIdx.x;
+    unsigned int column = blockIdx.y*blockDim.y + threadIdx.x;
+
+    // Reset the forces
+    if(column == 0) {
+        particles[row].force = 0.;
+    }
+
+    __syncthreads();
+
+    if( column > row && column < n_particles ){
+        
+        double cutoff_radius = 3.5;
+        auto dr = box->distance_vector(
+            particles[row].position, 
+            particles[column].position
+        );
+
+        if ((dr * dr) < (cutoff_radius * cutoff_radius)) {
+            auto force = particles[row]
+                .interaction_force_with(particles[column], *box);
+
+            for( int i=0; i<force.dimensions; ++i ){
+                atomicAdd( &particles[row].force[i], force[i] );
+                atomicAdd( &particles[column].force[i], -force[i] );
+            }  
+        }
+        
+    }
+}
+
+template <typename ParticleT, typename ContainerT>
+__global__                                                       
+void first_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt) {
+    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (index < n_particles){
+        
+          // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
+          auto particle = particles[index];
+          auto dr = particle.velocity*dt + 0.5*particle.force*dt*dt;
+          auto new_pos = particle.position + dr;
+
+          particles[index].position = (*box).apply_boundary_conditions(new_pos); 
+
+          // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
+          auto dv = 0.5*particle.force*dt;
+          //print_vector( &dv );
+          particles[index].velocity += 0.5*particle.force*dt;
+    }
+}            
+
+template <typename ParticleT, typename ContainerT>
+__global__                                                       
+void second_half_kernel(ParticleT *particles, int n_particles, ContainerT *box, double dt)  {
+    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (index < n_particles){
+        
+          // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
+          auto particle = particles[index];
+          particles[index].velocity += 0.5*particle.force*dt;
+    }
+}
 
 #endif
