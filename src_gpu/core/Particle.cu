@@ -32,7 +32,7 @@ class Particle {
         __host__ __device__
         double kinetic_energy() {
             auto& v = velocity;
-            return 1/2. * (v*v);
+            return .5 * (v*v);
         }
 
         friend std::ostream& operator<<(

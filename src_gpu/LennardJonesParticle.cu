@@ -29,9 +29,8 @@ public:
 
         double r2 = (dr*dr);
         double r6_i = 1./(r2*r2*r2);
-        double r12_i = (r6_i * r6_i);
 
-        return 48*(r12_i - 0.5*r6_i) * (dr / r2);
+        return 48*r6_i*(r6_i - 0.5) * (dr / r2);
     }
 
     template< typename ContainerT >

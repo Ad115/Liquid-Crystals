@@ -25,7 +25,7 @@ public:
                 } 
             );
         
-        return 2./(3*system.n_particles) * total_kinetic_energy;
+        return 2./(3*system.n_particles-3) * total_kinetic_energy;
      }
 
     template< typename ParticleSystem>

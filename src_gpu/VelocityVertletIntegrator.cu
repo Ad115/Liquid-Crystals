@@ -25,10 +25,11 @@ public:
         * improve memory usage, the integration is done in two steps.
         */
 
-        // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
-        update_positions(system);
         // v(t + 1/2*dt) = v(t) + 1/2*f(t)*dt
         update_velocities(system);
+
+        // r(t + dt) = r(t) + v(t+1/2dt)*dt
+        update_positions(system);
 
         // r(t + dt)  -->  f(t + dt)
         update_forces(system);
@@ -47,8 +48,8 @@ public:
         system.map_to_particles(
             [box_ptr, dt=time_step] __device__ (particle_t& p){
 
-                // r(t + dt) = r(t) + v(t)*dt + 1/2*f(t)*dt^2
-                auto new_pos = p.position + p.velocity*dt + 0.5*p.force*dt*dt;
+                // r(t + dt) = r(t) + v(t + 1/2dt)*dt
+                auto new_pos = p.position + p.velocity*dt;
 
                 p.position = (*box_ptr).apply_boundary_conditions(new_pos); 
             }

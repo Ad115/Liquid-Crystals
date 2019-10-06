@@ -29,7 +29,7 @@ using LJSystem = GPUParticleSystem<
 int main(void) {
 
     int n_particles = 100;
-    double numeric_density = 0.05;
+    double numeric_density = 0.01;
     Temperature thermostat{5.};
 
     std::ofstream outputf("output.xyz");
@@ -48,9 +48,9 @@ int main(void) {
             << std::endl;
 
 
-    int simulation_steps = 100; // understand it as "frames", how many steps in time
-    double time_step = 0.1;
-    double sample_period = 0.01;
+    int simulation_steps = 10000; // understand it as "frames", how many steps in time
+    double time_step = 0.001;
+    double sample_period = 0.001;
 
     auto integration_method = VelocityVertlet{};
     
