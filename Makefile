@@ -16,5 +16,9 @@ test: compile # "It compiles" is a good first test
 	nvcc tests_main.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o tests.out -I. && \
 	./tests.out
 
+test_pcuditas:
+	nvcc pcuditas_test.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o tests.out -I. && \
+	./tests.out
+
 clean:
 	rm *.out *.o *.xyz --verbose -f
