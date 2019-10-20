@@ -1,5 +1,118 @@
 #pragma once
 
+/* 
+## Clase `gpu_array`
+
+Un *smart pointer* para arreglos de objetos en el GPU. La contraparte del 
+`gpu_object` pero para arreglos.
+
+La clase abstrae la alocación y liberación de memoria además de las operaciones 
+de copia entre Host y Device. Esta es una abstracción del Host, por lo que no 
+se puede utilizar en un kernel. 
+*/
+
+template<typename T>
+__global__
+void _init_array_kernel(T *gpu_array, size_t n) {
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
+        i < n; 
+        i += blockDim.x * gridDim.x) 
+    {
+        new (&gpu_array[i]) T();
+    }
+}
+
+template<typename T, typename Transformation>
+__global__
+void _transform_kernel(T *gpu_array, size_t n, Transformation fn) {
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
+        i < n; 
+        i += blockDim.x * gridDim.x) 
+    {
+        gpu_array[i] = fn(gpu_array[i], i);
+    }
+}
+
+template<typename T, typename Transformation>
+__global__
+void _for_each_kernel(T *gpu_array, size_t n, Transformation fn) {
+
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
+        i < n; 
+        i += blockDim.x * gridDim.x) 
+    {
+        fn(gpu_array[i], i);
+    }
+}
+
+
+template< typename T >
+class gpu_array {
+  
+    T *_gpu_pointer;
+    T *_cpu_pointer;
+    
+    public:
+
+    size_t size;
+    using element_t = T;
+    
+    gpu_array(size_t n): size(n) {
+         
+        // <-- Allocate and initialize on GPU
+        cudaMalloc(&_gpu_pointer, n * sizeof(T));      
+
+        _init_array_kernel<<<128,32>>>(_gpu_pointer, n);
+
+
+        // <-- Allocate and initialize on GPU
+        _cpu_pointer = (T *) malloc(n * sizeof(T));
+
+        for (int i=0; i<n; i++) {
+            new (&_cpu_pointer[i]) T();
+        }
+    }
+    
+    T *gpu_pointer() const {
+        return _gpu_pointer;
+    }
+    
+    void to_cpu() {
+        cudaMemcpy(
+            _cpu_pointer, _gpu_pointer, 
+            size*sizeof(T), 
+            cudaMemcpyDeviceToHost
+        );
+    }
+    
+    T operator*() {
+        to_cpu();
+        return _cpu_pointer;
+    }
+
+    T operator[](size_t idx) {
+        return _cpu_pointer[idx];
+    }
+
+    template <class TransformationT>
+    void transform(TransformationT gpu_fn){
+        _transform_kernel<<<128,32>>>(_gpu_pointer, size, gpu_fn);
+    }
+
+    template <class FunctionT>
+    void for_each(FunctionT gpu_fn){
+        _for_each_kernel<<<128,32>>>(_gpu_pointer, size, gpu_fn);
+    }
+    
+    ~gpu_array() {
+        free(_cpu_pointer);
+        cudaFree(_gpu_pointer);
+    }
+};
+
+
 
 /* -----------------------------------------------------------------------
 
@@ -15,45 +128,58 @@
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
 
-SCENARIO("GPU Array specification") {
+TEST_SUITE("GPU Array specification") {
 
-    SECTION("GPU Array initialization") {
+    SCENARIO("GPU Array initialization") {
 
         GIVEN("A size and the type of the elements") {
 
-            int size = 100;
+            int size = 10;
             using element_t = int;
 
-            WHEN("A GPU array can be initialized without failure") {
+            THEN("A GPU array can be initialized without failure") {
 
-                auto array = gpu_array<element_t>(100);
+                auto array = gpu_array<element_t>(size);
 
-                using array_element_t = typename array::element_t;
-                CHECK(typeid(array::element_t) == typeid(element_t))
+                using array_element_t = decltype(array)::element_t;
+                CHECK(typeid(array_element_t) == typeid(element_t));
+                CHECK(array.size == size);
             }
         }
     }
 
-    SECCION("GPU Array transformation/measurement") {
+    SCENARIO("GPU Array transformation") {
         GIVEN("A GPU array") {
-            int size = 100;
+            int size = 10;
             using element_t = int;
 
-            auto array = gpu_array<element_t>(100);
+            auto array = gpu_array<element_t>(size);
 
             WHEN("A transformation kernel is applied on it") {
                 array.transform(
                     [] __device__ (element_t current_val, int idx) {
                         return element_t(idx);
-
                 });
                 THEN("The values on GPU are changed accordingly") {
-                    array.get()
+                    array.to_cpu();
                     for(int i=0; i<array.size; i++){
-                        CHECK(array[i] == i);
+                        CHECK(array[i] == element_t(i));
                     }
                 }
             }
+
+            SUBCASE("Another syntax for a transformation") {
+                array.for_each(
+                    [] __device__ (element_t &el, int idx) {
+                        el = element_t(idx * idx);
+                });
+                
+                array.to_cpu();
+                for(int i=0; i<array.size; i++){
+                    CHECK(array[i] == element_t(i*i));
+                }
+            }
+
         }
     }
 }
