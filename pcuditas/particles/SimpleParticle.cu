@@ -57,17 +57,19 @@ using SimpleParticle = Particle<EuclideanVector<3, double>>;
 
 TEST_SUITE("Particle specification") {
 
-    SCENARIO("Particle initialization") {
+    SCENARIO("Description") {
         GIVEN("A particle") {
 
             using vector_t = EuclideanVector<3, double>;
             Particle<vector_t> p;
     
             THEN("It's state is given by a position, a velocity and a force vector") {
-                // Nothing to test here...
+                CHECK(p.position == vector_t::zero());
+                CHECK(p.velocity == vector_t::zero());
+                CHECK(p.force == vector_t::zero());
             }
     
-            AND_THEN("It state is given in terms of a specific frame of reference") {
+            AND_THEN("Those vectors live in a specific frame of reference") {
     
                 CHECK(p.dimensions == vector_t::dimensions);
     
