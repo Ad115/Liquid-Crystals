@@ -105,6 +105,10 @@ class gpu_array {
     void for_each(FunctionT gpu_fn){
         _for_each_kernel<<<128,32>>>(_gpu_pointer, size, gpu_fn);
     }
+
+    // Iterator protocol
+    T* begin() { return _cpu_pointer; }
+    T* end() { return _cpu_pointer + size; }
     
     ~gpu_array() {
         free(_cpu_pointer);
