@@ -14,3 +14,5 @@
 
 // --- Files to test
 #include "pcuditas/gpu_array.cu"
+#include "pcuditas/vectors/EuclideanVector.cu"
+#include "pcuditas/particles/SimpleParticle.cu"

@@ -1,3 +1,5 @@
+#pragma once
+
 /* 
 ## Clase `Particle`
 
@@ -6,11 +8,9 @@ instanciada tanto en el Host como en el Device. Contiene vectores de posición,
 velocidad y fuerza. 
 */ 
 
-#ifndef PARTICLE_HEADER
-#define PARTICLE_HEADER
-#include "pcuditas/vectors/Euclidean.cu"
+#include "pcuditas/vectors/EuclideanVector.cu"
 
-template< typename VectorT=EuclideanVector<> >
+template< typename VectorT=EuclideanVector<3, double> >
 struct Particle {
 
     using vector_type = VectorT;
@@ -57,7 +57,7 @@ SCENARIO("Particle specification") {
 
     GIVEN("A particle") {
 
-        using vector_t = Vector<3, double>;
+        using vector_t = EuclideanVector<3, double>;
         Particle<vector_t> p;
 
         THEN("It's state is given by a position, a velocity and a force vector") {
@@ -74,5 +74,4 @@ SCENARIO("Particle specification") {
     }
 }
 
-#endif
 #endif
