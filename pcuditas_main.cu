@@ -13,7 +13,7 @@ int main() {
 
     auto move = RandomWalk{};
     auto environment = EmptySpace{};
-    auto output = XYZ{'output.xyz'}
+    auto output = XYZ{"output.xyz"};
 
     for (int i=0; i < 100; ++i) {
         move(particles, environment);
