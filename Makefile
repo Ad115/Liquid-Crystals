@@ -6,6 +6,13 @@ compile:
 run: compile
 	./gpu_main.out
 
+compile_pcuditas:
+	nvcc pcuditas_main.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o pcuditas_main.out -I.
+
+run_pcuditas: compile_pcuditas
+	./pcuditas_main.out
+
+
 compile_cpu:
 	g++ cpu_main.cpp -std=c++11  -o PartiCuditas.out
 
