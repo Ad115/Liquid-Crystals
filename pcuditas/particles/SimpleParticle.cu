@@ -10,6 +10,7 @@ velocidad y fuerza.
 
 #include "pcuditas/vectors/EuclideanVector.cu"
 
+
 template< typename VectorT=EuclideanVector<3, double> >
 struct Particle {
 
@@ -38,6 +39,7 @@ struct Particle {
 template<class VectorT>
 constexpr int Particle<VectorT>::dimensions;
 
+using SimpleParticle = Particle<EuclideanVector<3, double>>;
 
 /* -----------------------------------------------------------------------
 
