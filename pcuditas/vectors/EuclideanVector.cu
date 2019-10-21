@@ -230,98 +230,102 @@ EuclideanVector<Size, T> operator+(
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
 
-SCENARIO("Euclidean Vector specification") {
+TEST_SUITE("Euclidean Vector specification") {
 
-    GIVEN("An euclidean vector") {
+    SCENARIO("Operations and properties on vectors") {
+        
+        GIVEN("An euclidean vector") {
 
-        EuclideanVector<3, double> v {1., 3., 5.};
-        REQUIRE(v.dimensions == 3);
+            EuclideanVector<3, double> v {1., 3., 5.};
+            REQUIRE(v.dimensions == 3);
+        
+            THEN("It has elements that can be accessed randomly") {
+        
+                CHECK(v[1] == 3.);
+                CHECK(v[0] == 1.);
+                CHECK(v[2] == 5.);
+        
+                AND_THEN("It's elements can be modified independently") {
+        
+                    v[1] += 2;
+                    CHECK(v[1] == 5.);
+        
+                    v[2] = 0.3;
+                    CHECK(v[2] == 0.3);
+                }
+            }
+        
+            THEN("Another vector can be initialized from it") {
+                auto v2 = v;
+                CHECK(v2 == EuclideanVector<>{1., 3., 5.});
+            }
     
-        THEN("It has elements that can be accessed randomly") {
+            THEN("It can be inverted") {
+                auto minus_v = -v;
+                CHECK(minus_v[0] == -v[0]);
+                CHECK(minus_v[1] == -v[1]);
+                CHECK(minus_v[2] == -v[2]);
+            }
     
-            CHECK(v[1] == 3.);
-            CHECK(v[0] == 1.);
-            CHECK(v[2] == 5.);
+            THEN("It is unchanged by adding or substracting a null vector") {
+                auto null_vector = EuclideanVector<>::null();
+                CHECK(v + null_vector == v);
+                CHECK(v - null_vector == v);
+            }
     
-            AND_THEN("It's elements can be modified independently") {
+            THEN("Dot product with itself gives the magnitude squared") {
+                auto magnitude_sqrd = (
+                    v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+                );
     
-                v[1] += 2;
-                CHECK(v[1] == 5.);
+                CHECK(v*v == magnitude_sqrd);
+            }
     
-                v[2] = 0.3;
-                CHECK(v[2] == 0.3);
+            THEN("It can be multiplied by a scalar from both sides") {
+                CHECK(2*v == v + v);
+                CHECK(v*2 == v + v);
             }
         }
+        
+        GIVEN("Two vectors") {
+            EuclideanVector<3> u {1., 3., 5.};
+            EuclideanVector<3> v {4., 2., 0.};
+        
+            THEN("They can be added component-wise") {
+                CHECK((u + v) == EuclideanVector<3>{5., 5., 5.});
+        
+                EuclideanVector<> sum;
+                sum += u;
+                sum += v;
+                CHECK(sum == EuclideanVector<3>{5., 5., 5.});
+            }
+        
+            THEN("They can be substracted component-wise") {
+                CHECK((u - v) == EuclideanVector<3>{-3., 1., 5.});
+        
+                EuclideanVector<> diff = u;
+                diff -= v;
+                CHECK(diff == EuclideanVector<3>{-3., 1., 5.});
+            }
     
-        THEN("Another vector can be initialized from it") {
-            auto v2 = v;
-            CHECK(v2 == EuclideanVector<>{1., 3., 5.});
-        }
-
-        THEN("It can be inverted") {
-            auto minus_v = -v;
-            CHECK(minus_v[0] == -v[0]);
-            CHECK(minus_v[1] == -v[1]);
-            CHECK(minus_v[2] == -v[2]);
-        }
-
-        THEN("It is unchanged by adding or substracting a null vector") {
-            auto null_vector = EuclideanVector<>::null();
-            CHECK(v + null_vector == v);
-            CHECK(v - null_vector == v);
-        }
-
-        THEN("Dot product with itself gives the magnitude squared") {
-            auto magnitude_sqrd = (
-                v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
-            );
-
-            CHECK(v*v == magnitude_sqrd);
-        }
-
-        THEN("It can be multiplied by a scalar from both sides") {
-            CHECK(2*v == v + v);
-            CHECK(v*2 == v + v);
-        }
-    }
+            THEN("We can form the dot product between them") {
+                auto dot_product = (
+                    u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
+                );
+                CHECK(u*v == dot_product);
+            }
     
-    GIVEN("Two vectors") {
-        EuclideanVector<3> u {1., 3., 5.};
-        EuclideanVector<3> v {4., 2., 0.};
-    
-        THEN("They can be added component-wise") {
-            CHECK((u + v) == EuclideanVector<3>{5., 5., 5.});
-    
-            EuclideanVector<> sum;
-            sum += u;
-            sum += v;
-            CHECK(sum == EuclideanVector<3>{5., 5., 5.});
-        }
-    
-        THEN("They can be substracted component-wise") {
-            CHECK((u - v) == EuclideanVector<3>{-3., 1., 5.});
-    
-            EuclideanVector<> diff = u;
-            diff -= v;
-            CHECK(diff == EuclideanVector<3>{-3., 1., 5.});
+            THEN("We can form a linear combination of them") {
+                auto linear_combination = EuclideanVector<>{
+                    2*u[0]+3*v[0], 2*u[1]+3*v[1], 2*u[2]+3*v[2]
+                };
+                CHECK((2*u + 3*v) == linear_combination);
+            }
         }
 
-        THEN("We can form the dot product between them") {
-            auto dot_product = (
-                u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-            );
-            CHECK(u*v == dot_product);
-        }
-
-        THEN("We can form a linear combination of them") {
-            auto linear_combination = EuclideanVector<>{
-                2*u[0]+3*v[0], 2*u[1]+3*v[1], 2*u[2]+3*v[2]
-            };
-            CHECK((2*u + 3*v) == linear_combination);
-        }
     }
 
-    SUBCASE("There can be vectors of different sizes and types") {
+    SCENARIO("There can be vectors of different sizes and types") {
 
         GIVEN("A vector with seven integers") {
             auto vector_7_int = EuclideanVector<7, int>{1,2,3,4,5,6,7};

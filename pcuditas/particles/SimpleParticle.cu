@@ -53,23 +53,25 @@ constexpr int Particle<VectorT>::dimensions;
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
 
-SCENARIO("Particle specification") {
+TEST_SUITE("Particle specification") {
 
-    GIVEN("A particle") {
+    SCENARIO("Particle initialization") {
+        GIVEN("A particle") {
 
-        using vector_t = EuclideanVector<3, double>;
-        Particle<vector_t> p;
-
-        THEN("It's state is given by a position, a velocity and a force vector") {
-            // Nothing to test here...
-        }
-
-        AND_THEN("It state is given in terms of a specific frame of reference") {
-
-            CHECK(p.dimensions == vector_t::dimensions);
-
-            using p_vector_t = typename decltype(p)::vector_type;
-            CHECK(typeid(p_vector_t) == typeid(vector_t));
+            using vector_t = EuclideanVector<3, double>;
+            Particle<vector_t> p;
+    
+            THEN("It's state is given by a position, a velocity and a force vector") {
+                // Nothing to test here...
+            }
+    
+            AND_THEN("It state is given in terms of a specific frame of reference") {
+    
+                CHECK(p.dimensions == vector_t::dimensions);
+    
+                using p_vector_t = typename decltype(p)::vector_type;
+                CHECK(typeid(p_vector_t) == typeid(vector_t));
+            }
         }
     }
 }
