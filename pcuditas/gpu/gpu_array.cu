@@ -11,6 +11,9 @@ de copia entre Host y Device. Esta es una abstracción del Host, por lo que no
 se puede utilizar en un kernel. 
 */
 
+#include "pcuditas/gpu/macros.cu"
+
+
 template<typename T>
 __global__
 void _init_array_kernel(T *gpu_array, size_t n) {
@@ -60,9 +63,8 @@ class gpu_array {
     using element_t = T;
     
     gpu_array(size_t n): size(n) {
-         
         // <-- Allocate and initialize on GPU
-        cudaMalloc(&_gpu_pointer, n * sizeof(T));      
+        CUDA_CALL(cudaMalloc(&_gpu_pointer, n * sizeof(T)));      
 
         _init_array_kernel<<<128,32>>>(_gpu_pointer, n);
 
@@ -80,11 +82,11 @@ class gpu_array {
     }
     
     void to_cpu() {
-        cudaMemcpy(
+        CUDA_CALL(cudaMemcpy(
             _cpu_pointer, _gpu_pointer, 
             size*sizeof(T), 
             cudaMemcpyDeviceToHost
-        );
+        ));
     }
     
     T operator*() {
@@ -112,7 +114,7 @@ class gpu_array {
     
     ~gpu_array() {
         free(_cpu_pointer);
-        cudaFree(_gpu_pointer);
+        CUDA_CALL(cudaFree(_gpu_pointer));
     }
 };
 

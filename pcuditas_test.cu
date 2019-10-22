@@ -13,7 +13,8 @@
 #define __TESTING__
 
 // --- Files to test
-#include "pcuditas/gpu_array.cu"
+#include "pcuditas/gpu/gpu_array.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/transform_measure/Spatial.cu"
+#include "pcuditas/integrators/RandomWalk.cu"

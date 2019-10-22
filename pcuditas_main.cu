@@ -1,4 +1,4 @@
-#include <pcuditas/gpu_array.cu>
+#include <pcuditas/gpu/gpu_array.cu>
 #include <pcuditas/particles/SimpleParticle.cu>
 #include <pcuditas/transform_measure/Spatial.cu>
 #include <pcuditas/transform_measure/XYZformat.cu>

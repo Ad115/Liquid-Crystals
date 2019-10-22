@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pcuditas/gpu_array.cu"
+#include "pcuditas/gpu/gpu_array.cu"
 
 template<class ParticleT>
 void move_to_origin(gpu_array<ParticleT> &particles) { /*
@@ -53,6 +53,7 @@ TEST_SUITE("move_to_origin transformation specification") {
             }
 
             THEN("The transformation sets all positions to the zero vector") {
+                
                 move_to_origin(particles);
 
                 // Verify all vectors are zero

@@ -134,6 +134,16 @@ class EuclideanVector {
         return magnitude_sqrd <= epsilon;
     }
 
+    __host__ __device__ 
+    Type magnitude() const {
+        return sqrt((*this)*(*this));
+    }
+
+    __host__ __device__ 
+    EuclideanVector<Size, Type> unit_vector(const EuclideanVector<Size, Type> v){
+        return v/v.magnitude();
+    }
+
     friend std::ostream& operator<<(
         std::ostream& stream, 
         const EuclideanVector<Size, Type>& vector) {
