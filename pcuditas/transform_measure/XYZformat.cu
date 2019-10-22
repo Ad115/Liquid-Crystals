@@ -3,20 +3,12 @@
 #include <fstream>
 
 class XYZ {
-    std::unique_ptr<std::ofstream> outputf_ptr;
-    std::string filename;
+    std::ofstream outputf;
 
 public:
-    XYZ(const char *fname) filename(fname);
+    XYZ(const char *filename) : outputf(filename) {}
 
     XYZ(const XYZ &other) = default;
-
-    void open() {
-        bool initialized = static_cast<bool>(outputf_ptr);
-        if (!initialized) {
-            outputf_ptr -> open(filename);
-        }
-    }
 
     template <class ParticleT>
     void operator()(gpu_array<ParticleT> &particles) { /*
@@ -33,7 +25,6 @@ public:
         *   1.5 1.5 1.5
         *   2.0 2.0 2.0
         */
-        auto outputf = *outputf_ptr;
 
         particles.to_cpu();
         outputf << particles.size << "\n";
