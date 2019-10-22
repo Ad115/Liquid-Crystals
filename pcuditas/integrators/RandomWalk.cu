@@ -21,13 +21,6 @@ VectorT random_vector(curandState_t *state) {
     return result;
 }
 
-template <class VectorT>
-__device__ 
-VectorT unit_vector(VectorT v) {
-    auto magnitude = sqrt(v*v);
-    return v / magnitude;
-}
-
 /* Random numbers in CUDA: 
     http://ianfinlayson.net/class/cpsc425/notes/cuda-random 
 */
@@ -63,8 +56,8 @@ public:
 
     template <class ParticleT>
     void operator()(gpu_array<ParticleT> &particles) {
+        
         bool initialized = static_cast<bool>(random_state);
-
         if (!initialized) {
             initialize_random_state(particles.size);
         }
@@ -76,7 +69,7 @@ public:
             __device__ 
             (ParticleT &p, size_t idx) {
                 auto delta = random_vector<vector_t>(&rand_state[idx]);
-                p.position += unit_vector(delta);
+                p.position += delta.unit_vector();
             }
         );
     }
@@ -132,16 +125,15 @@ TEST_SUITE("Random Walk specification") {
                     double r_mag_sum = 0;
                     auto r_sum = vector_t::zero();
                     for(auto p : particles) {
-                        auto mag = sqrt(p.position * p.position);
-                        r_mag_sum += mag;
+                        r_mag_sum += p.position.magnitude();
                         r_sum += p.position;
                     }
 
                     auto r_average = r_mag_sum / particles.size;
                     CHECK(r_average > 0);
-                    CHECK(r_average < steps);
+                    CHECK(r_average < steps); // Bounded by 0 and t
 
-                    CHECK(sqrt(r_sum*r_sum) < steps);
+                    CHECK(r_sum.magnitude() < steps); // not larger than t
                 }
             }
         }

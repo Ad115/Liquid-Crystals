@@ -140,8 +140,8 @@ class EuclideanVector {
     }
 
     __host__ __device__ 
-    EuclideanVector<Size, Type> unit_vector(const EuclideanVector<Size, Type> v){
-        return v/v.magnitude();
+    EuclideanVector<Size, Type> unit_vector(){
+        return (*this)/(*this).magnitude();
     }
 
     friend std::ostream& operator<<(
