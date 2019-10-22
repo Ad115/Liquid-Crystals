@@ -12,11 +12,12 @@ int main() {
     move_to_origin(particles);
 
     auto move = RandomWalk{};
-    auto environment = EmptySpace{};
-    auto output = XYZ{"output.xyz"};
+    //auto environment = EmptySpace{};
+    XYZ output{"output.xyz"};
 
     for (int i=0; i < 100; ++i) {
-        move(particles, environment);
+        //move(particles, environment);
+        move(particles);
         output(particles);
     }
 }
