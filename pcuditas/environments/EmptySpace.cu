@@ -19,13 +19,4 @@ public:
 };
 
 
-class EmptySpace {
-
-    gpu_object<GPUEmptySpace> _gpu_self;
-
-public:
-
-    GPUEmptySpace *gpu_pointer() {
-        return _gpu_self.gpu_pointer();
-    }
-};
+using EmptySpace = gpu_object<GPUEmptySpace>;
