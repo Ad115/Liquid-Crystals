@@ -69,7 +69,7 @@ class gpu_array {
         _init_array_kernel<<<128,32>>>(_gpu_pointer, n);
 
 
-        // <-- Allocate and initialize on GPU
+        // <-- Allocate and initialize on CPU
         _cpu_pointer = (T *) malloc(n * sizeof(T));
 
         for (int i=0; i<n; i++) {
@@ -88,8 +88,8 @@ class gpu_array {
             cudaMemcpyDeviceToHost
         ));
     }
-    
-    T operator*() {
+
+    T *cpu_pointer() const {
         to_cpu();
         return _cpu_pointer;
     }

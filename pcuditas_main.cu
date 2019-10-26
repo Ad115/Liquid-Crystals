@@ -12,12 +12,11 @@ int main() {
     move_to_origin(particles);
 
     auto move = RandomWalk{};
-    //auto environment = EmptySpace{};
+    auto environment = EmptySpace{};
     std::ofstream output("output.xyz");
 
     for (int i=0; i < 100; ++i) {
-        //move(particles, environment);
-        move(particles);
+        move(particles, environment);
         XYZ::write(output, particles);
     }
 }

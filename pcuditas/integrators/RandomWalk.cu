@@ -74,6 +74,29 @@ public:
         );
     }
 
+    template <class ParticleT, class EnvironmentT>
+    void operator()(gpu_array<ParticleT> &particles, EnvironmentT &env) {
+        
+        bool initialized = static_cast<bool>(random_state);
+        if (!initialized) {
+            initialize_random_state(particles.size);
+        }
+
+        using vector_t = typename ParticleT::vector_type;
+
+        particles.for_each(
+            [rand_state=random_state->gpu_pointer(),
+             environment=env.gpu_pointer()] 
+            __device__ 
+            (ParticleT &p, size_t idx) {
+                auto delta = random_vector<vector_t>(&rand_state[idx]);
+                p.position += delta.unit_vector();
+
+                p.position = environment->apply_boundary_conditions(p.position);
+            }
+        );
+    }
+
     void initialize_random_state(size_t n) {
         random_state.reset(new gpu_array<curandState_t>(n));
 
