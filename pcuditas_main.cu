@@ -13,11 +13,11 @@ int main() {
 
     auto move = RandomWalk{};
     //auto environment = EmptySpace{};
-    XYZ output{"output.xyz"};
+    std::ofstream output("output.xyz");
 
     for (int i=0; i < 100; ++i) {
         //move(particles, environment);
         move(particles);
-        output(particles);
+        XYZ::write(output, particles);
     }
 }

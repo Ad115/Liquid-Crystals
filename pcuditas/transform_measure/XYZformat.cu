@@ -6,12 +6,9 @@ class XYZ {
     std::ofstream outputf;
 
 public:
-    XYZ(const char *filename) : outputf(filename) {}
-
-    XYZ(const XYZ &other) = default;
 
     template <class ParticleT>
-    void operator()(gpu_array<ParticleT> &particles) { /*
+    static void write(std::ostream& stream, gpu_array<ParticleT> &particles) {/*
         * Output the positions of the particles in the XYZ format.
         * The format consists in a line with the number of particles,
         * then a comment line followed by the space-separated coordinates 
@@ -27,15 +24,23 @@ public:
         */
 
         particles.to_cpu();
-        outputf << particles.size << "\n";
+        stream << particles.size << "\n";
         for (auto p: particles) {
-            outputf << "\n";
+            stream << "\n";
             auto position = p.position;
             for (int D = 0; D < position.dimensions; D++)
-                outputf << position[D] << " ";
+                stream << position[D] << " ";
         }
-        outputf << std::endl;
+        stream << std::endl;
 
+        return;
+    }
+
+    XYZ(const char *filename) : outputf(filename) {}
+
+    template <class ParticleT>
+    void operator()(gpu_array<ParticleT> &particles) {
+        write(outputf, particles);
         return;
     }
 };
