@@ -1,7 +1,7 @@
 #include <pcuditas/gpu/gpu_array.cu>
 #include <pcuditas/particles/SimpleParticle.cu>
 #include <pcuditas/transform_measure/Spatial.cu>
-#include <pcuditas/transform_measure/XYZformat.cu>
+#include <pcuditas/input_output/XYZformat.cu>
 #include <pcuditas/integrators/RandomWalk.cu>
 #include <pcuditas/environments/EmptySpace.cu>
 
