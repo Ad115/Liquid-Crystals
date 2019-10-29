@@ -275,6 +275,7 @@ TEST_SUITE("Euclidean Vector specification") {
                 CHECK(minus_v[0] == -v[0]);
                 CHECK(minus_v[1] == -v[1]);
                 CHECK(minus_v[2] == -v[2]);
+                CHECK(-(-v) == v);
             }
     
             THEN("It is unchanged by adding or substracting a null vector") {
@@ -308,6 +309,20 @@ TEST_SUITE("Euclidean Vector specification") {
                 sum += u;
                 sum += v;
                 CHECK(sum == EuclideanVector<3>{5., 5., 5.});
+
+                AND_THEN("The sum is commutative") {
+                    CHECK((u + v) == (v + u));
+                }
+
+                AND_THEN("The sum is associative") {
+                    EuclideanVector<3> w {23., 45., 0.2};
+                    CHECK(((u + v) + w) == (u + (v + w)));
+                }
+
+                AND_THEN("The sum is distributive over the product by scalar") {
+                    auto r = 100.;
+                    CHECK(r*(u + v) == (r*u + r*v));
+                }
             }
         
             THEN("They can be substracted component-wise") {
@@ -316,6 +331,8 @@ TEST_SUITE("Euclidean Vector specification") {
                 EuclideanVector<> diff = u;
                 diff -= v;
                 CHECK(diff == EuclideanVector<3>{-3., 1., 5.});
+
+                CHECK((u-v) == (u + -v));
             }
     
             THEN("We can form the dot product between them") {
@@ -323,6 +340,11 @@ TEST_SUITE("Euclidean Vector specification") {
                     u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
                 );
                 CHECK(u*v == dot_product);
+
+                AND_THEN("The inner product distributes over the sum") {
+                    EuclideanVector<3> w {23., 45., 0.2};
+                    CHECK(w*(u + v) == (w*u + w*v));
+                }
             }
     
             THEN("We can form a linear combination of them") {
