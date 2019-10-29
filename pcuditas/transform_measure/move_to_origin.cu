@@ -47,19 +47,35 @@ TEST_SUITE("move_to_origin transformation specification") {
             });
 
             // Verify no vector is zero
+            // --> on device
+            particles.for_each([] __device__ (particle_t &p, size_t idx) {
+                assert(p.position.magnitude() > 0);
+            });
+
+            // --> on host
             particles.to_cpu();
             for(auto p : particles) {
-                REQUIRE(p.position * p.position > 0);
+                REQUIRE(p.position.magnitude() > 0);
             }
 
-            THEN("The transformation sets all positions to the zero vector") {
-                
-                move_to_origin(particles);
+            WHEN("The transformation is applied to the GPU particles") {
 
-                // Verify all vectors are zero
-                particles.to_cpu();
-                for(auto p : particles) {
-                    CHECK(p.position == vector_t::zero());
+                move_to_origin(particles);
+                
+                THEN("The transformation sets all positions to the zero vector") {
+
+                    // Verify all vectors are zero
+                    // --> on device
+                    particles.for_each([] __device__ (particle_t &p, size_t idx) {
+                        assert(p.position.magnitude() == 0);
+                    });
+
+
+                    // --> on host
+                    particles.to_cpu();
+                    for(auto p : particles) {
+                        CHECK(p.position == vector_t::zero());
+                    }
                 }
             }
         }
