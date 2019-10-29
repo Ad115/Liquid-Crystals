@@ -188,7 +188,15 @@ TEST_SUITE("GPU Array specification") {
                     [] __device__ (element_t &el, int idx) {
                         el = element_t(idx * idx);
                 });
-                
+
+
+                // Check on gpu
+                array.for_each(
+                    [] __device__ (element_t val, int idx){
+                        assert(val == element_t(idx*idx));
+                });
+
+                // Check on cpu
                 array.to_cpu();
                 for(int i=0; i<array.size; i++){
                     CHECK(array[i] == element_t(i*i));
