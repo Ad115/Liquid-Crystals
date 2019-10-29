@@ -17,6 +17,6 @@
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
-#include "pcuditas/transform_measure/Spatial.cu"
+#include "pcuditas/transform_measure/move_to_origin.cu"
 #include "pcuditas/integrators/RandomWalk.cu"
 #include "pcuditas/environments/EmptySpace.cu"
