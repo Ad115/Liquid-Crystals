@@ -1,3 +1,4 @@
+#pragma once
 /* 
 ## Clase `gpu_object`
 
@@ -13,9 +14,14 @@ se puede utilizar en un kernel.
 
 template<typename T>
 __global__
-void _init_object_kernel(T *device_pointer) {
-         
+void _init_empty_object_kernel(T *device_pointer) {
   new (device_pointer) T();
+}
+
+template<typename T>
+__global__
+void _init_from_object_kernel(T *device_pointer, T value) {
+  (*device_pointer) = value;
 }
 
 
@@ -29,11 +35,23 @@ class gpu_object {
 
     using value_t = T;
     
+    gpu_object(T object) {
+        // <-- Allocate and initialize on GPU
+        CUDA_CALL(cudaMalloc(&_gpu_pointer, sizeof(T)));      
+
+        _init_from_object_kernel<<<1,1>>>(_gpu_pointer, object);
+
+
+        // <-- Allocate and initialize on CPU
+        _cpu_pointer = (T *) malloc(sizeof(T));
+        (*_cpu_pointer) = object;
+    }
+
     gpu_object() {
         // <-- Allocate and initialize on GPU
         CUDA_CALL(cudaMalloc(&_gpu_pointer, sizeof(T)));      
 
-        _init_object_kernel<<<1,1>>>(_gpu_pointer);
+        _init_empty_object_kernel<<<1,1>>>(_gpu_pointer);
 
 
         // <-- Allocate and initialize on CPU
@@ -69,6 +87,11 @@ class gpu_object {
     }
 };
 
+template <typename T>
+gpu_object<T> gpu_object_from(T object) {
+    return gpu_object<T>{object};
+}
+
 /* -----------------------------------------------------------------------
 
  The following is executable documentation as described in Kevlin Henney's talk 
@@ -83,6 +106,17 @@ class gpu_object {
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
 
+// <- Test structure
+template<int N>
+struct simple_array {
+    static constexpr int size = N;
+    int values[N];
+};
+
+template<int N>
+constexpr int simple_array<N>::size;
+
+
 TEST_SUITE("GPU object specification") {
 
     SCENARIO("GPU object initialization") {
@@ -90,12 +124,31 @@ TEST_SUITE("GPU object specification") {
         GIVEN("A type of object") {
             using element_t = int;
 
-            THEN("A GPU object can be initialized without failure") {
+            THEN("An empty GPU object can be initialized without failure") {
 
                 auto gpu_obj = gpu_object<element_t>{};
 
                 using gpu_obj_element_t = decltype(gpu_obj)::value_t;
                 CHECK(typeid(gpu_obj_element_t) == typeid(element_t));
+            }
+        }
+
+        GIVEN("A CPU object") {
+            using element_t = simple_array<3>;
+            element_t cpu = {0,1,2};
+
+            WHEN("A GPU object is initialized to mirror it") {
+                auto gpu = gpu_object_from(cpu);
+
+                THEN("The object is represented correctly") {
+                    using gpu_element_t = decltype(gpu)::value_t;
+                    CHECK(typeid(gpu_element_t) == typeid(element_t));
+                    
+                    gpu.to_cpu();
+                    for(int i=0; i<3; i++) {
+                        CHECK((*gpu).values[i] == i);
+                    }
+                }
             }
         }
     }
