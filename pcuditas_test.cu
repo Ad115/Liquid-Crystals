@@ -19,3 +19,4 @@
 #include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/transform_measure/Spatial.cu"
 #include "pcuditas/integrators/RandomWalk.cu"
+#include "pcuditas/environments/EmptySpace.cu"
