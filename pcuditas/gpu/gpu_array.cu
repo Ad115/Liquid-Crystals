@@ -51,6 +51,7 @@ void _for_each_kernel(T *gpu_array, size_t n, Transformation fn) {
 }
 
 
+
 template< typename T >
 class gpu_array {
   
@@ -167,14 +168,15 @@ TEST_SUITE("GPU Array specification") {
                     [] __device__ (element_t current_val, int idx) {
                         return element_t(idx);
                 });
+
                 THEN("The values on GPU are changed accordingly") {
 
-                    array.for_each(
+                    array.for_each( // <-- check on GPU
                         [] __device__ (element_t current_val, int idx){
                             assert(current_val == idx);
                     });
 
-                    array.to_cpu();
+                    array.to_cpu(); // <-- check on CPU
                     for(int i=0; i<array.size; i++){
                         CHECK(array[i] == element_t(i));
                     }
