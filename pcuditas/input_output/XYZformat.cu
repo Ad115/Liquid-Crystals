@@ -44,3 +44,56 @@ public:
         return;
     }
 };
+
+/* -----------------------------------------------------------------------
+
+ The following is executable documentation as described in Kevlin Henney's talk 
+    "Structure and Interpretation of Test Cases" (https://youtu.be/tWn8RA_DEic)
+    written using the doctest framework (https://github.com/onqtam/doctest). 
+
+ Run with `make test`.
+*/
+
+#ifdef __TESTING__
+
+#include "doctest.h"
+#include <typeinfo>   // operator typeid
+#include <sstream> // stringstream
+#include <string> // string
+#include "pcuditas/transform_measure/move_to_origin.cu"
+#include "pcuditas/particles/SimpleParticle.cu"
+#include "pcuditas/vectors/EuclideanVector.cu"
+
+TEST_SUITE("XYZ format output specification") {
+
+    SCENARIO("Description") {
+        GIVEN("A GPU array of 3D-particles at arbitrary positions") {
+
+            using vector_t = EuclideanVector<3>;
+            using particle_t = Particle<vector_t>;
+
+            auto particles = gpu_array<particle_t>(3);
+            particles.for_each([] __device__ (particle_t &p, int i) {
+                p.position = vector_t{(float)i, (float)(i*i), (float)(i*i + i)};
+            });
+
+            WHEN("The system is written to the XYZ format") {
+                std::stringstream stream;
+
+                XYZ::write(stream, particles);
+
+                THEN("The output has the correct format") {
+                    std::string expected = (
+                        "3\n\n"
+                        "0 0 0 \n"
+                        "1 1 2 \n"
+                        "2 4 6 \n"
+                    );
+                    CHECK(stream.str() == expected);
+                }
+            }
+        }
+    }
+}
+
+#endif

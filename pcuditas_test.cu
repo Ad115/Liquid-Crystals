@@ -20,3 +20,4 @@
 #include "pcuditas/transform_measure/move_to_origin.cu"
 #include "pcuditas/integrators/RandomWalk.cu"
 #include "pcuditas/environments/EmptySpace.cu"
+#include "pcuditas/input_output/XYZformat.cu"
