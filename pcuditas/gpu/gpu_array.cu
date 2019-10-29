@@ -133,6 +133,7 @@ class gpu_array {
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
+#include <assert.h>
 
 TEST_SUITE("GPU Array specification") {
 
@@ -167,6 +168,12 @@ TEST_SUITE("GPU Array specification") {
                         return element_t(idx);
                 });
                 THEN("The values on GPU are changed accordingly") {
+
+                    array.for_each(
+                        [] __device__ (element_t current_val, int idx){
+                            assert(current_val == idx);
+                    });
+
                     array.to_cpu();
                     for(int i=0; i<array.size; i++){
                         CHECK(array[i] == element_t(i));

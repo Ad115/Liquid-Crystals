@@ -9,7 +9,7 @@
 
 
 int main() {
-    auto particles = gpu_array<SimpleParticle>(100);
+    auto particles = gpu_array<SimpleParticle>{100};
     move_to_origin(particles);
 
     auto move = RandomWalk{};
