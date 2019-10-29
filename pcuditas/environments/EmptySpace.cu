@@ -2,7 +2,7 @@
 
 #include "pcuditas/gpu/gpu_object.cu"
 
-class GPUEmptySpace {
+class EmptySpace {
 public:
 
     template <class VectorT>
@@ -17,6 +17,3 @@ public:
         return (p2 - p1);
     }
 };
-
-
-using EmptySpace = gpu_object<GPUEmptySpace>;

@@ -1,4 +1,5 @@
 #include <pcuditas/gpu/gpu_array.cu>
+#include <pcuditas/gpu/gpu_object.cu>
 #include <pcuditas/particles/SimpleParticle.cu>
 #include <pcuditas/transform_measure/Spatial.cu>
 #include <pcuditas/transform_measure/XYZformat.cu>
@@ -12,7 +13,7 @@ int main() {
     move_to_origin(particles);
 
     auto move = RandomWalk{};
-    auto environment = EmptySpace{};
+    auto environment = gpu_object_from(EmptySpace{});
     std::ofstream output("output.xyz");
 
     for (int i=0; i < 100; ++i) {
