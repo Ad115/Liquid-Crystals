@@ -43,6 +43,7 @@ void init_random_kernel(
     }
 }
 
+#define DEFAULT_RANDOM_NUMBERS 2014
 
 class RandomWalk { /*
     * An integrator that adds random positions each step.
@@ -52,30 +53,36 @@ class RandomWalk { /*
 
 public:
 
-    RandomWalk() = default;
+    RandomWalk(
+            unsigned int seed = 0,
+            int random_array_size = DEFAULT_RANDOM_NUMBERS) {
+        
+        if (seed == 0) 
+            seed = time(0);
+        
+        initialize_random_state(random_array_size);
+    }
 
     template <class ParticleT>
     void operator()(gpu_array<ParticleT> &particles) {
-        
-        bool initialized = static_cast<bool>(random_state);
-        if (!initialized) {
-            initialize_random_state(particles.size);
-        }
 
         using vector_t = typename ParticleT::vector_type;
 
         particles.for_each(
-            [rand_state=random_state->gpu_pointer()] 
+            [rand_state=random_state->gpu_pointer(),
+             rand_size=random_state->size] 
             __device__ 
-            (ParticleT &p, size_t idx) {
-                auto delta = random_vector<vector_t>(&rand_state[idx]);
+            (ParticleT &p, size_t i) {
+                auto delta = random_vector<vector_t>(&rand_state[i % rand_size]);
                 p.position += delta.unit_vector();
             }
         );
     }
 
     template <class ParticleT, class EnvironmentT>
-    void operator()(gpu_array<ParticleT> &particles, EnvironmentT &env) {
+    void operator()(
+            gpu_array<ParticleT> &particles, 
+            gpu_object<EnvironmentT> &env) {
         
         // Apply usual integration with no environment
         (*this)(particles);
