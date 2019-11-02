@@ -1,7 +1,7 @@
 #include <pcuditas/gpu/gpu_array.cu>
 #include <pcuditas/gpu/gpu_object.cu>
 #include <pcuditas/particles/SimpleParticle.cu>
-#include <pcuditas/transform_measure/move_to_origin.cu>
+#include <pcuditas/transform_measure/simple_cubic_lattice.cu>
 #include <pcuditas/input_output/XYZformat.cu>
 #include <pcuditas/integrators/RandomWalk.cu>
 #include <pcuditas/environments/EmptySpace.cu>
@@ -10,7 +10,7 @@
 
 int main() {
     auto particles = gpu_array<SimpleParticle>{100};
-    move_to_origin(particles);
+    arrange_on_cubic_lattice(particles, 100.);
 
     auto move = RandomWalk{};
     auto environment = gpu_object_from(EmptySpace{});
