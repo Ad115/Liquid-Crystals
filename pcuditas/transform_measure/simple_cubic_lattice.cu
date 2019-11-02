@@ -1,3 +1,4 @@
+#include "pcuditas/gpu/gpu_array.cu"
 
 template <typename VectorT>
 __host__ __device__ 
@@ -42,7 +43,7 @@ public:
     simple_cubic_lattice(gpu_array<ParticleT> &particles, double L)
         : side_length(L) {
         
-        (*this)(particles);
+        arrange_on_cubic_lattice(particles, side_length);
     }
 
     template<class ParticleT>
