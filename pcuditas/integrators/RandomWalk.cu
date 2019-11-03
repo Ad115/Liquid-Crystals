@@ -121,7 +121,7 @@ public:
 
 #include "doctest.h"
 #include <typeinfo>   // operator typeid
-#include "pcuditas/transform_measure/move_to_origin.cu"
+#include "pcuditas/initial_conditions/move_to_origin.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
 

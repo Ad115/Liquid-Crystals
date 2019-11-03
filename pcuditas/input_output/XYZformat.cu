@@ -60,7 +60,6 @@ public:
 #include <typeinfo>   // operator typeid
 #include <sstream> // stringstream
 #include <string> // string
-#include "pcuditas/transform_measure/move_to_origin.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
 
