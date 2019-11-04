@@ -29,7 +29,7 @@ public:
 
     template<class ParticleT, class ContainerT>
     __host__ __device__
-    Vector<ParticleT> interaction_force(
+    static Vector<ParticleT> interaction_force(
             const ParticleT p1, const ParticleT p2,
             const ContainerT& box) { 
 
@@ -53,7 +53,7 @@ public:
 #include <typeinfo>   // typeid
 #include <math.h> // sqrt, pow
 #include "pcuditas/vectors/EuclideanVector.cu"
-//#include "EmptySpace.cu"
+#include "pcuditas/environments/EmptySpace.cu"
 
 SCENARIO("Lennard-Jones interaction specification") {
 
@@ -176,8 +176,164 @@ SCENARIO("Lennard-Jones interaction specification") {
         }
     }
 
+    SUBCASE("Integration test: using on the CPU with a container") {
+        GIVEN("A Lennard-Jones particle at the origin, in a given environment") {
+
+            SimpleParticle p;
+            EmptySpace environment;
+            using interaction = LennardJones;
     
+            double R0 = 1.122462048309373;
+            vector_t small_dr = {.5, .5, .5}; // Magnitude < R0
+            auto critical_dr = R0 * unit(vector_t{13.5, -24.5, .5}); // Mag == R0
+            vector_t large_dr = {-2.5, -6., -4.3}; // Magnitude > R0
     
+            WHEN("It interacts with another particle at a distance < R0 := 2^(1/6)") {
+    
+                SimpleParticle other;
+                other.position = small_dr;
+    
+                auto dr = environment.distance_vector(p.position, other.position);
+                CHECK(magnitude(dr) < R0); // Distance less than R0
+    
+                THEN("The force it experiments is repulsive") {
+    
+                    auto force = interaction::interaction_force(p, other, environment);
+    
+                    // Repulsive force: force goes in the same direction of dr
+                    CHECK(force * dr > 0); 
+                }
+            }
+    
+            WHEN("It interacts with another particle at a distance == R0 := 2^(1/6)") {
+    
+                SimpleParticle other;
+                other.position = critical_dr;
+    
+                auto dr = environment.distance_vector(p.position, other.position);
+                CHECK(magnitude(dr) == doctest::Approx(R0)); // Distance is exactly R0
+    
+                THEN("The force it experiments is exactly zero") {
+    
+                    auto force = interaction::interaction_force(p, other, environment);
+                    CHECK(magnitude(force) == doctest::Approx(0)); // Exactly zero
+                }
+            }
+    
+            WHEN("It interacts with another particle at a distance > R0 := 2^(1/6)") {
+    
+                SimpleParticle other;
+                other.position = large_dr;
+    
+                auto dr = environment.distance_vector(p.position, other.position);
+                CHECK(magnitude(dr) > R0); // Farther than distance R0
+    
+                THEN("The force it experiments is attractive") {
+    
+                    auto force = interaction::interaction_force(p, other, environment);
+    
+                    // Attractive: force and dr point in opposite directions
+                    CHECK(force * dr < 0); 
+                }
+            }
+        }  
+    }
+
+    SUBCASE("Integration test: using on the GPU with a container") {
+        GIVEN("A Lennard-Jones particle at the origin, in a given environment") {
+
+            SimpleParticle p;
+            gpu_object<EmptySpace> environment;
+            using interaction = LennardJones;
+    
+            double R0 = 1.122462048309373;
+            vector_t small_dr = {.5, .5, .5}; // Magnitude < R0
+            auto critical_dr = R0 * unit(vector_t{13.5, -24.5, .5}); // Mag == R0
+            vector_t large_dr = {-2.5, -6., -4.3}; // Magnitude > R0
+    
+            WHEN("It interacts with another at a distance < R0 := 2^(1/6) on the GPU") {
+    
+                SimpleParticle other;
+                other.position = small_dr;
+    
+                gpu_object<vector_t> dr;
+                environment.call_on_gpu(
+                    [p, other, gpu_dr = dr.gpu_pointer()] 
+                    __device__ (EmptySpace &self) {
+                        (*gpu_dr) = self.distance_vector(p.position, other.position);
+                });
+
+                CHECK(magnitude(dr.to_cpu()) < R0); // Distance less than R0
+    
+                THEN("The force it experiments is repulsive") {
+                    
+                    gpu_object<vector_t> force;
+                    environment.call_on_gpu(
+                        [p, other, gpu_force = force.gpu_pointer()] 
+                        __device__ (EmptySpace &env) {
+                            (*gpu_force) = interaction::interaction_force(p, other, env);
+                    });
+    
+                    // Repulsive force: force goes in the same direction of dr
+                    CHECK(force.to_cpu() * dr.to_cpu() > 0); 
+                }
+            }
+    
+            WHEN("It interacts with another particle at a distance == R0 := 2^(1/6)") {
+    
+                SimpleParticle other;
+                other.position = critical_dr;
+    
+                gpu_object<vector_t> dr;
+                environment.call_on_gpu(
+                    [p, other, gpu_dr = dr.gpu_pointer()] 
+                    __device__ (EmptySpace &self) {
+                        (*gpu_dr) = self.distance_vector(p.position, other.position);
+                });
+
+                CHECK(magnitude(dr.to_cpu()) == doctest::Approx(R0)); // Distance is exactly R0
+    
+                THEN("The force it experiments is exactly zero") {
+    
+                    gpu_object<vector_t> force;
+                    environment.call_on_gpu(
+                        [p, other, gpu_force = force.gpu_pointer()] 
+                        __device__ (EmptySpace &env) {
+                            (*gpu_force) = interaction::interaction_force(p, other, env);
+                    });
+                    CHECK(magnitude(force.to_cpu()) == doctest::Approx(0)); // Exactly zero
+                }
+            }
+    
+            WHEN("It interacts with another particle at a distance > R0 := 2^(1/6)") {
+    
+                SimpleParticle other;
+                other.position = large_dr;
+    
+                gpu_object<vector_t> dr;
+                environment.call_on_gpu(
+                    [p, other, gpu_dr = dr.gpu_pointer()] 
+                    __device__ (EmptySpace &self) {
+                        (*gpu_dr) = self.distance_vector(p.position, other.position);
+                });
+
+                CHECK(magnitude(dr.to_cpu()) > R0); // Farther than distance R0
+    
+                THEN("The force it experiments is attractive") {
+    
+                    gpu_object<vector_t> force;
+                    environment.call_on_gpu(
+                        [p, other, gpu_force = force.gpu_pointer()] 
+                        __device__ (EmptySpace &env) {
+                            (*gpu_force) = interaction::interaction_force(p, other, env);
+                    });
+    
+                    // Attractive: force and dr point in opposite directions
+                    CHECK(force.to_cpu() * dr.to_cpu() < 0); 
+                }
+            }
+        }  
+    }
 }
 
 #endif
