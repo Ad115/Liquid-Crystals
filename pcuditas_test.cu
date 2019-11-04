@@ -19,5 +19,6 @@
 #include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/initial_conditions/move_to_origin.cu"
 #include "pcuditas/integrators/RandomWalk.cu"
+#include "pcuditas/integrators/SimpleIntegrator.cu"
 #include "pcuditas/environments/EmptySpace.cu"
 #include "pcuditas/input_output/XYZformat.cu"
