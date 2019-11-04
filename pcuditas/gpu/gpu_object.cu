@@ -15,7 +15,7 @@ se puede utilizar en un kernel.
 template<typename T>
 __global__
 void _init_empty_object_kernel(T *device_pointer) {
-  new (device_pointer) T();
+  (*device_pointer) = T();
 }
 
 template<typename T>
@@ -68,7 +68,7 @@ class gpu_object {
 
         // <-- Allocate and initialize on CPU
         _cpu_pointer = (T *) malloc(sizeof(T));
-        new (&_cpu_pointer) T();
+        (*_cpu_pointer) = T();
     }
     
     T *gpu_pointer() const {
@@ -80,6 +80,7 @@ class gpu_object {
     }
 
     T to_cpu() {
+
         CUDA_CALL(cudaMemcpy(
             _cpu_pointer, _gpu_pointer, 
             sizeof(T), 
@@ -160,6 +161,14 @@ TEST_SUITE("GPU object specification") {
                 // Check on CPU
                 using gpu_obj_element_t = decltype(gpu_obj)::value_t;
                 CHECK(typeid(gpu_obj_element_t) == typeid(element_t));
+
+                AND_THEN("It can be assigned a value on GPU") {
+                    gpu_obj.call_on_gpu([] __device__ (element_t &obj) {
+                        obj = 54321 << 12;
+                    });
+
+                    CHECK(gpu_obj.to_cpu() == 54321 <<12);
+                }
             }
         }
 
