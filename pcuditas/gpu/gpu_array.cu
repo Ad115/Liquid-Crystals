@@ -53,7 +53,10 @@ void _for_each_kernel(T *gpu_array, size_t n, Transformation fn) {
 
 template<typename T, typename Reduction>
 __global__
-void _reduce_kernel(T *gpu_array, size_t n, T *out, Reduction fn) {
+void _reduce_kernel(T *gpu_array, size_t n, T *out, Reduction fn) { /*
+    Log-reduction based from the one in the book "The CUDA Handbook" by 
+    Nicholas Wilt.
+    */
 
     extern __shared__ T partials[];
 
@@ -152,24 +155,24 @@ class gpu_array {
     }
 
     template <class ReductionT>
-    T reduce(
+    gpu_object<T> reduce(
             ReductionT reduce_fn, 
             int n_blocks = 128, 
             int threads_per_block = 32 /* <-- Must be a power of 2! */ ) {
 
-        auto out = gpu_array<T>(threads_per_block);
         unsigned int shared_memory_size = threads_per_block * sizeof(T);
 
+        auto thread_partials = gpu_array<T>(threads_per_block);
         _reduce_kernel<<<n_blocks, threads_per_block, shared_memory_size>>>(
-            _gpu_pointer, size, out.gpu_pointer(), reduce_fn
+            _gpu_pointer, size, thread_partials.gpu_pointer(), reduce_fn
         );
 
+        auto out = gpu_object<T>();
         _reduce_kernel<<<1, threads_per_block, shared_memory_size>>>(
-           _gpu_pointer, size, out.gpu_pointer(), reduce_fn
+           thread_partials.gpu_pointer(), size, out.gpu_pointer(), reduce_fn
         );
 
-        out.to_cpu();
-        return out[0];
+        return out;
     }
 
     // Iterator protocol
@@ -302,7 +305,7 @@ TEST_SUITE("GPU Array specification") {
                 auto sum_gpu = array.reduce(
                     [] __device__ (element_t reduced, element_t el) {
                         return reduced + el;
-                });
+                }).to_cpu();
 
                 THEN("The reduction on CPU yields the same result") {
 
