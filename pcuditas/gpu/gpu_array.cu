@@ -113,6 +113,24 @@ class gpu_array {
     T* begin() { return _cpu_pointer; }
     T* end() { return _cpu_pointer + size; }
     
+    gpu_array<T> copy() {
+        auto copied = gpu_array<T>(this->size);
+
+        // Copy in GPU
+        copied.for_each(
+            [old_one=this->gpu_pointer()]
+            __device__ (T &new_el, int i) {
+                return new_el = old_one[i];
+        });
+
+        // Copy in CPU
+        for(int i=0; i<size; i++) {
+            copied[i] = (*this)[i];
+        }
+
+        return copied;
+    }
+
     ~gpu_array() {
         free(_cpu_pointer);
         CUDA_CALL(cudaFree(_gpu_pointer));
