@@ -291,7 +291,7 @@ TEST_SUITE("GPU Array specification") {
     }
 
     SCENARIO("GPU Array reduction") {
-        GIVEN("A GPU array") {
+        GIVEN("A GPU array with arbitrary elements") {
             int size = 1000;
             using element_t = int;
 
