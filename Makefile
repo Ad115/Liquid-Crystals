@@ -1,19 +1,14 @@
 .PHONY: compile test clean
 
-compile:
-	nvcc gpu_main.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o gpu_main.out -I.
 
 run: compile
-	./gpu_main.out
+	./pcuditas_main.out
 
-compile_cpu:
-	g++ cpu_main.cpp -std=c++11  -o PartiCuditas.out
-
-run_cpu: compile_cpu
-	./PartiCuditas.out
+compile:
+	nvcc pcuditas_main.cu -std=c++11 -arch=sm_50 --expt-extended-lambda -o pcuditas_main.out -I.
 
 test: compile # "It compiles" is a good first test
-	nvcc tests_main.cu -std=c++11 -arch=sm_75 --expt-extended-lambda -o tests.out -I. && \
+	nvcc pcuditas_test.cu -std=c++11 -arch=sm_50 --expt-extended-lambda -o tests.out -I. && \
 	./tests.out
 
 clean:
