@@ -5,25 +5,35 @@
 #include "pcuditas/initial_conditions/random.cu"
 #include "pcuditas/input_output/XYZformat.cu"
 #include "pcuditas/integrators/SimpleIntegrator.cu"
+#include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
-
+#include "pcuditas/tools/Temperature.cu"
 
 
 int main() {
     auto particles = gpu_array<LennardJonesParticle>{40};
     arrange_on_cubic_lattice(particles, 6.);
-    set_random_velocities(particles, .05);
+    set_random_velocities(particles);
 
-
+    auto thermostat = Temperature{0.01};
     auto move = SimpleIntegrator{};
-    auto environment = gpu_object_from(PeriodicBoundaryBox{10.});
+    auto environment = gpu_object_from(PeriodicBoundaryBox{30.});
     std::ofstream output("output.xyz");
     double dt = 0.003;
+
+    std::cout << 0 << " temperature: " << Temperature::measure(particles)
+    << std::endl;
 
     for (int i=0; i < 50000; ++i) {
         if (i%100 == 0) {
             XYZ::write(output, particles);
         }
+
+        thermostat.setpoint += 5e-6;
+        thermostat(particles);
+
+        std::cout << i << " temperature: " << Temperature::measure(particles)
+        << std::endl;
 
         move(particles, environment, dt);
     }
