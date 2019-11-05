@@ -4,6 +4,7 @@ vscode/
 *.out
 *.xyz
 *.bin
+.vs
 
 
 
