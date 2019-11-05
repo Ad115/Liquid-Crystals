@@ -25,21 +25,23 @@ void update_forces(gpu_array<ParticleT> &particles) {
 
         using vector_t = typename ParticleT::vector_type;
 
-        // First, reset forces
-        particles.for_each([] __device__ (ParticleT& self, int i){
-                self.force = vector_t::zero();
-        });
-        
-        // Launch the kernel! As you can see we are not copying memory from CPU to GPU
-        // as you would normally do with cudaMemcpy(), as we don't need to! The
-        // vectors live in GPU already so we just need to know where they start (GPU
-        // pointer) and pass it to the kernel.
+        // Naïve paralellization.
+        particles.for_each(
+            [others=particles.gpu_pointer(), n=particles.size] 
+            __device__ (ParticleT& self, int i) {
+                auto force = vector_t::zero();
+                auto self_pos = self.position;
 
-        unsigned int block_size = 128;
-        unsigned int threads_per_block = 32;
-        update_forces_kernel<<<block_size,threads_per_block>>>(
-            particles.gpu_pointer(), particles.size
-        );
+                for(int j=0; j<n; j++) {
+                    auto other_pos = others[j].position;
+                    auto dr = other_pos - self_pos;
+                    auto f_ij = ParticleT::force_law(dr);
+
+                    force += (i != j) ? f_ij : vector_t::zero();    
+                }
+
+                self.force = force;
+        });
 }
 
 template <typename ParticleT>
