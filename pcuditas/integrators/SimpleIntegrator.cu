@@ -31,7 +31,7 @@ public:
 
     template <class ParticleT>
     void update_forces(gpu_array<ParticleT> &particles) {
-        ::update_forces(particles);
+        update_forces_shared(particles);
     }
 
     template <class ParticleT, class EnvironmentT>
@@ -44,7 +44,7 @@ public:
     template <class ParticleT>
     void move(
             gpu_array<ParticleT> &particles,
-            double dt = 0.001) {
+            double dt = 0.01) {
 
         particles.for_each(
             [dt] 
@@ -62,7 +62,7 @@ public:
     void operator()(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
-            double dt = 0.03) {
+            double dt = 0.005) {
 
         this->update_forces(particles);
         
