@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pcuditas/gpu/gpu_array.cu"
+#include "ForceCalculation.cu"
 
 #include <curand.h>
 #include <curand_kernel.h>
@@ -9,8 +10,9 @@
 
 class SimpleIntegrator { /*
     * The simplest integrator (Runge-Kutta):
-    *   x -> x + v dt;
-    *   v -> v + f dt;
+    *   1. update f
+    *   2. x -> x + v dt;
+    *   3. v -> v + f dt;
     */
 
 public:
@@ -19,6 +21,28 @@ public:
 
     template <class ParticleT>
     void operator()(
+            gpu_array<ParticleT> &particles,
+            double dt = 0.00001) {
+
+        this->update_forces(particles);
+
+        this->move(particles, dt);
+    }
+
+    template <class ParticleT>
+    void update_forces(gpu_array<ParticleT> &particles) {
+        ::update_forces(particles);
+    }
+
+    template <class ParticleT, class EnvironmentT>
+    void update_forces(
+                gpu_array<ParticleT> &particles, 
+                gpu_object<EnvironmentT> &env) {
+
+    }
+
+    template <class ParticleT>
+    void move(
             gpu_array<ParticleT> &particles,
             double dt = 0.00001) {
 
@@ -39,6 +63,8 @@ public:
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
             double dt = 0.01) {
+
+        this->update_forces(particles);
         
         // Apply usual integration with no environment
         (*this)(particles, dt);
@@ -89,10 +115,10 @@ TEST_SUITE("Simple Integrator specification") {
             auto snapshot = particles.copy();
 
             WHEN("A Simple Integrator is used to move them") {
-                auto move = SimpleIntegrator{};
+                auto integrator = SimpleIntegrator{};
                 int steps = 1000;
                 for (int i=0; i<steps; i++) {
-                    move(particles);
+                    integrator.move(particles);
                 }
 
                 THEN("Each particle has moved along the direction of their velocity") {
