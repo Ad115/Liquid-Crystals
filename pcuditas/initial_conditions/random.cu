@@ -57,7 +57,7 @@ public:
 // ---
 
 template <class ParticleT>
-void set_random_velocities(gpu_array<ParticleT> &particles, double max_speed) {
+void set_random_velocities(gpu_array<ParticleT> &particles, double max_speed=1) {
     particles.for_each(
         [max_speed] 
         __device__ (ParticleT &p, size_t idx) {
