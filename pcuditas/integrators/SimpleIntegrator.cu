@@ -44,7 +44,7 @@ public:
     template <class ParticleT>
     void move(
             gpu_array<ParticleT> &particles,
-            double dt = 0.00001) {
+            double dt = 0.001) {
 
         particles.for_each(
             [dt] 
@@ -53,7 +53,7 @@ public:
                 p.position += p.velocity * dt;
 
                 // v -> v + f dt;
-                p.velocity += p.force * dt;
+                p.velocity += 1/2. * p.force * dt * dt;
             }
         );
     }
@@ -62,7 +62,7 @@ public:
     void operator()(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
-            double dt = 0.01) {
+            double dt = 0.03) {
 
         this->update_forces(particles);
         

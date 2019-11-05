@@ -17,7 +17,7 @@ public:
         * 
         * See: http://www.pages.drexel.edu/~cfa22/msim/node26.html
         */
-        auto& dr = distance_vector;
+        auto dr = distance_vector;
 
         double r2 = (dr*dr);
         double r6_i = 1./(r2*r2*r2);

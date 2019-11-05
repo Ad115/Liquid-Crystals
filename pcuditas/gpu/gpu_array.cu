@@ -141,7 +141,7 @@ class gpu_array {
     template <class TransformationT>
     void transform(
             TransformationT gpu_fn,
-            int n_blocks = 128, 
+            int n_blocks = 1024, 
             int n_threads = 32 ){
         _transform_kernel<<<n_blocks, n_threads>>>(_gpu_pointer, size, gpu_fn);
     }
@@ -149,7 +149,7 @@ class gpu_array {
     template <class FunctionT>
     void for_each(
             FunctionT gpu_fn,
-            int n_blocks = 128, 
+            int n_blocks = 1024, 
             int n_threads = 32 ) {
         _for_each_kernel<<<n_blocks, n_threads>>>(_gpu_pointer, size, gpu_fn);
     }
