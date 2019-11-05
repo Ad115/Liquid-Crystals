@@ -4,7 +4,6 @@
 #include "pcuditas/initial_conditions/simple_cubic_lattice.cu"
 #include "pcuditas/initial_conditions/random.cu"
 #include "pcuditas/input_output/XYZformat.cu"
-#include "pcuditas/integrators/SimpleIntegrator.cu"
 #include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
 #include "pcuditas/tools/Temperature.cu"
