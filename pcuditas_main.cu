@@ -22,10 +22,10 @@ int main() {
     std::ofstream output("output.xyz");
 
     for (int i=0; i < 10000; ++i) {
-        move(particles, environment);
         if (i%100 == 0) {
             XYZ::write(output, particles);
         }
-        
+
+        move(particles, environment);
     }
 }
