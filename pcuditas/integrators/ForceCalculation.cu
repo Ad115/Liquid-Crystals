@@ -3,12 +3,15 @@
 #include "pcuditas/gpu/gpu_array.cu"
 
 
-template <typename ParticleT>
+template<class ParticleT, class EnvironmentT>
 __global__ 
-void update_forces_shared_kernel(ParticleT *particles, int n_particles) {
+void update_forces_shared_kernel(
+        ParticleT *particles, int n_particles, 
+        EnvironmentT *env_ptr) {
 
     extern __shared__ ParticleT particles_sh[];
     using vector_t = typename ParticleT::vector_type;
+    EnvironmentT env = (*env_ptr);
 
     for (int i = blockIdx.x*blockDim.x + threadIdx.x; 
          i < n_particles; 
@@ -26,7 +29,7 @@ void update_forces_shared_kernel(ParticleT *particles, int n_particles) {
             // Reduce on block
             for(size_t k=0; k<blockDim.x; k++) {
                 auto other_pos = particles[k].position;
-                auto dr = self_pos - other_pos;
+                auto dr = env.distance_vector(other_pos, self_pos);
 
                 auto f_ij = (i != k) ? ParticleT::force_law(dr) : vector_t::zero();
                 force += f_ij;   
@@ -39,9 +42,10 @@ void update_forces_shared_kernel(ParticleT *particles, int n_particles) {
     }
 }
 
-template<class ParticleT>
+template<class ParticleT, class EnvironmentT>
 void update_forces_shared(
             gpu_array<ParticleT> &particles,
+            gpu_object<EnvironmentT> &env,
             unsigned int block_size = 1024,
             unsigned int threads_per_block = 32) {
         
@@ -52,35 +56,39 @@ void update_forces_shared(
 
         unsigned int shared_memory_size = threads_per_block * sizeof(ParticleT);
         update_forces_shared_kernel<<<block_size, threads_per_block, shared_memory_size>>>(
-            particles.gpu_pointer(), particles.size
+            particles.gpu_pointer(), particles.size, 
+            env.gpu_pointer()
         );
 }
 
 
 // ===   ===   ===
 
-template<class ParticleT>
-void update_forces_naive(gpu_array<ParticleT> &particles) {
+template<class ParticleT, class EnvironmentT>
+void update_forces_naive(
+        gpu_array<ParticleT> &particles,
+        gpu_object<EnvironmentT> &environment) {
 
-        using vector_t = typename ParticleT::vector_type;
+    using vector_t = typename ParticleT::vector_type;
 
-        // Naïve paralellization.
-        particles.for_each(
-            [others=particles.gpu_pointer(), n=particles.size] 
-            __device__ (ParticleT& self, int i) {
-                auto force = vector_t::zero();
-                auto self_pos = self.position;
-
-                for(int j=0; j<n; j++) {
-                    auto other_pos = others[j].position;
-                    auto dr = self_pos - other_pos;
-
-                    auto f_ij = (i != j) ? ParticleT::force_law(dr) : vector_t::zero();
-                    force += f_ij;    
-                }
-
-                self.force = force;
-        });
+    // Naïve paralellization.
+    particles.for_each(
+        [others=particles.gpu_pointer(), n=particles.size, 
+         env_ptr=environment.gpu_pointer()] 
+        __device__ (ParticleT& self, int i) {
+            auto force = vector_t::zero();
+            auto self_pos = self.position;
+            for(int j=0; j<n; j++) {
+                auto other_pos = others[j].position;
+                auto dr = env_ptr->distance_vector(other_pos, self_pos);
+                
+                auto f_ij = (i != j) ? ParticleT::force_law(dr) : vector_t::zero();
+                force += f_ij;    
+            }
+        
+            self.force = force;
+        }
+    );
 }
 
 
@@ -101,9 +109,13 @@ __device__ double atomicAddDouble(double* address, double val)
     return __longlong_as_double(old);
 }
 
-template <typename ParticleT>
+template<class ParticleT, class EnvironmentT>
 __global__ 
-void update_forces_atomic_kernel(ParticleT *particles, int n_particles) {
+void update_forces_atomic_kernel(
+        ParticleT *particles, int n_particles,
+        EnvironmentT *env_ptr) {
+
+    EnvironmentT env = (*env_ptr);
 
     for (int k = blockIdx.x*blockDim.x + threadIdx.x; 
          k < n_particles*n_particles; 
@@ -113,8 +125,9 @@ void update_forces_atomic_kernel(ParticleT *particles, int n_particles) {
         int j = k/n_particles;
         
         double cutoff_radius = 3.5;
-        auto dr = (
-            particles[i].position - particles[j].position
+        auto dr = env.distance_vector(
+            particles[j].position,
+            particles[i].position 
         );
 
         if (dr.magnitude() < cutoff_radius) {
@@ -127,8 +140,10 @@ void update_forces_atomic_kernel(ParticleT *particles, int n_particles) {
     }
 }
 
-template<class ParticleT>
-void update_forces_atomic(gpu_array<ParticleT> &particles) {
+template<class ParticleT, class EnvironmentT>
+void update_forces_atomic(
+        gpu_array<ParticleT> &particles,
+        gpu_object<EnvironmentT> &environment) {
 
         using vector_t = typename ParticleT::vector_type;
 
@@ -145,7 +160,8 @@ void update_forces_atomic(gpu_array<ParticleT> &particles) {
         unsigned int block_size = 1024;
         unsigned int threads_per_block = 32;
         update_forces_atomic_kernel<<<block_size,threads_per_block>>>(
-            particles.gpu_pointer(), particles.size
+            particles.gpu_pointer(), particles.size,
+            environment.gpu_pointer()
         );
 }
 

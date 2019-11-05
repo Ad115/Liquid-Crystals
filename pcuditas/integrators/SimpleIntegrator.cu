@@ -1,6 +1,8 @@
 #pragma once
 
 #include "pcuditas/gpu/gpu_array.cu"
+#include "pcuditas/gpu/gpu_object.cu"
+#include "pcuditas/environments/EmptySpace.cu"
 #include "ForceCalculation.cu"
 
 #include <curand.h>
@@ -14,7 +16,7 @@ class SimpleIntegrator { /*
     *   2. x -> x + v dt;
     *   3. v -> v + f dt;
     */
-
+    gpu_object<EmptySpace> default_environment;
 public:
 
     SimpleIntegrator() = default;
@@ -24,21 +26,37 @@ public:
             gpu_array<ParticleT> &particles,
             double dt = 0.00001) {
 
-        this->update_forces(particles);
+        this->update_forces(particles, default_environment);
 
         this->move(particles, dt);
     }
 
-    template <class ParticleT>
-    void update_forces(gpu_array<ParticleT> &particles) {
-        update_forces_shared(particles);
+    template <class ParticleT, class EnvironmentT>
+    void operator()(
+            gpu_array<ParticleT> &particles, 
+            gpu_object<EnvironmentT> &env,
+            double dt = 0.001) {
+
+        this->update_forces(particles, env);
+        
+        this->move(particles, dt);
+
+        // Apply boundary conditions
+        particles.for_each(
+            [env_ptr=env.gpu_pointer()] 
+            __device__ 
+            (ParticleT &p, size_t idx) {
+                p.position = env_ptr->apply_boundary_conditions(p.position);
+            }
+        );
     }
+
 
     template <class ParticleT, class EnvironmentT>
     void update_forces(
                 gpu_array<ParticleT> &particles, 
                 gpu_object<EnvironmentT> &env) {
-
+        update_forces_shared(particles, env);
     }
 
     template <class ParticleT>
@@ -54,27 +72,6 @@ public:
 
                 // v -> v + f dt;
                 p.velocity += 1/2. * p.force * dt * dt;
-            }
-        );
-    }
-
-    template <class ParticleT, class EnvironmentT>
-    void operator()(
-            gpu_array<ParticleT> &particles, 
-            gpu_object<EnvironmentT> &env,
-            double dt = 0.005) {
-
-        this->update_forces(particles);
-        
-        // Apply usual integration with no environment
-        (*this)(particles, dt);
-
-        // Apply boundary conditions
-        particles.for_each(
-            [environment=env.gpu_pointer()] 
-            __device__ 
-            (ParticleT &p, size_t idx) {
-                p.position = environment->apply_boundary_conditions(p.position);
             }
         );
     }

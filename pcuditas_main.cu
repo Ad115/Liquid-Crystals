@@ -20,12 +20,13 @@ int main() {
     auto move = SimpleIntegrator{};
     auto environment = gpu_object_from(EmptySpace{});
     std::ofstream output("output.xyz");
+    double dt = 0.003;
 
-    for (int i=0; i < 10000; ++i) {
+    for (int i=0; i < 50000; ++i) {
         if (i%100 == 0) {
             XYZ::write(output, particles);
         }
 
-        move(particles, environment);
+        move(particles, environment, dt);
     }
 }
