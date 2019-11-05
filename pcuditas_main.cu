@@ -14,8 +14,8 @@ int main() {
     arrange_on_cubic_lattice(particles, 6.);
     set_random_velocities(particles);
 
-    auto thermostat = Temperature{0.01};
-    auto move = SimpleIntegrator{};
+    auto thermostat = Temperature{0.1};
+    auto move = VelocityVertlet{};
     auto environment = gpu_object_from(PeriodicBoundaryBox{30.});
     std::ofstream output("output.xyz");
     double dt = 0.003;
@@ -24,11 +24,11 @@ int main() {
     << std::endl;
 
     for (int i=0; i < 50000; ++i) {
-        if (i%100 == 0) {
+        if (i%10 == 0) {
             XYZ::write(output, particles);
         }
 
-        thermostat.setpoint += 5e-6;
+        thermostat.setpoint += 5e-4;
         thermostat(particles);
 
         std::cout << i << " temperature: " << Temperature::measure(particles)
