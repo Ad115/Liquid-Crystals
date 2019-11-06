@@ -122,6 +122,14 @@ class gpu_array {
             new (&_cpu_pointer[i]) T();
         }
     }
+
+    // Instantiate with a function to initialize each value
+    template <class InitializerT>
+    gpu_array(size_t n, InitializerT init_fn)
+        : gpu_array(n) { 
+        // Apply the initialization function to each element
+        (*this).for_each(init_fn);
+    }
     
     T *gpu_pointer() const {
         return _gpu_pointer;
@@ -296,9 +304,9 @@ TEST_SUITE("GPU Array specification") {
             int size = 10;
             using element_t = int;
 
-            auto array = gpu_array<element_t>(size);
-            array.for_each([]__device__ 
-                (element_t &el, int i) {
+            // Initialize to {0, 1, 2, 3, 4...9}
+            auto array = gpu_array<element_t>(size, 
+                []__device__ (element_t &el, int i) {
                     el = i;
             });
 
