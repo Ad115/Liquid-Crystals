@@ -1,5 +1,4 @@
-#include "pcuditas/gpu/gpu_array.cu"
-#include "pcuditas/gpu/gpu_object.cu"
+#include "pcuditas/gpu.cu"
 #include "pcuditas/particles/LennardJonesParticle.cu"
 #include "pcuditas/initial_conditions/simple_cubic_lattice.cu"
 #include "pcuditas/initial_conditions/random.cu"
