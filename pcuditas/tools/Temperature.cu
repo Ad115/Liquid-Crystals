@@ -21,15 +21,14 @@ public:
 
         using vector_t = typename ParticleT::vector_type;
 
-        auto kinetic_energies = gpu_array<double>{particles.size};
-        kinetic_energies.for_each(
-            [particles_ptr=particles.gpu_pointer()] 
-            __device__ (double &k, int idx) {
+        auto kinetic_energies 
+            = particles.transform<double>(
+                []__device__ (ParticleT &p, int idx) {
 
-                auto vel = particles_ptr[idx].velocity;
+                    auto vel = p.velocity;
 
-                k = 1/2. * (vel * vel);
-        });
+                    return 1/2. * (vel * vel);
+            });
     
         auto total_kinetic_energy = 
             kinetic_energies.reduce( 
