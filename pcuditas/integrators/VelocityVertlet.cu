@@ -89,17 +89,14 @@ public:
         update_forces_shared(particles, env, n_blocks, threads_per_block);
     }
 
-    template<typename SystemT>
-    void operator()(SystemT& system) {
-        integration_step(system);
-    }
-
     template <class ParticleT>
     void operator()(
             gpu_array<ParticleT> &particles,
-            double dt = 0.001) {
+            double dt = 0.001,
+            int n_blocks = 1024,
+            int threads_per_block = 32) {
 
-        integration_step(particles, default_environment, dt);
+        integration_step(particles, default_environment, dt, n_blocks, threads_per_block);
     }
 
     template <class ParticleT, class EnvironmentT>
