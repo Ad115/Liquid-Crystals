@@ -27,15 +27,18 @@ void _init_array_kernel(T *gpu_array, size_t n) {
     }
 }
 
-template<typename T, typename Transformation>
+template<class T, class TransformedT, class TransformationT>
 __global__
-void _transform_kernel(T *gpu_array, size_t n, Transformation fn) {
+void _transform_kernel(
+        T *from_array, size_t n, 
+        TransformedT *to_array,
+        TransformationT transform) {
 
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
         i < n; 
         i += blockDim.x * gridDim.x) 
     {
-        gpu_array[i] = fn(gpu_array[i], i);
+        to_array[i] = transform(from_array[i], i);
     }
 }
 
@@ -142,13 +145,21 @@ class gpu_array {
         return _cpu_pointer[idx];
     }
 
-    template <class TransformationT>
-    gpu_array<T>& transform(
+    template <class TransformedT, class TransformationT>
+    gpu_array<TransformedT> transform(
             TransformationT gpu_fn,
             int n_blocks = 1024, 
             int n_threads = 32 ){
-        _transform_kernel<<<n_blocks, n_threads>>>(_gpu_pointer, size, gpu_fn);
-        return *this;
+
+        auto transformed = gpu_array<TransformedT>{this->size};
+
+        _transform_kernel<<<n_blocks, n_threads>>>(
+            _gpu_pointer, size, 
+            transformed.gpu_pointer(),
+            gpu_fn
+        );
+
+        return transformed;
     }
 
     template <class FunctionT>
@@ -226,6 +237,11 @@ class gpu_array {
 #include <typeinfo>   // operator typeid
 #include <assert.h>
 
+template<class T>
+struct pair {
+    T first; T second;
+};
+
 TEST_SUITE("GPU Array specification") {
 
     SCENARIO("GPU Array initialization") {
@@ -246,53 +262,68 @@ TEST_SUITE("GPU Array specification") {
         }
     }
 
-    SCENARIO("GPU Array transformation") {
+    SCENARIO("GPU Array for_each") {
         GIVEN("A GPU array") {
             int size = 10;
             using element_t = int;
 
             auto array = gpu_array<element_t>(size);
 
-            WHEN("A transformation kernel is applied on it") {
-                array.transform(
-                    [] __device__ (element_t current_val, int idx) {
-                        return element_t(idx);
+            WHEN("It's elements are modified with for_each") {
+                array.for_each(
+                    [] __device__ (element_t &el, int idx) {
+                        el = idx * idx;
                 });
 
                 THEN("The values on GPU are changed accordingly") {
 
                     array.for_each( // <-- check on GPU
                         [] __device__ (element_t current_val, int idx){
-                            assert(current_val == idx);
+                            assert(current_val == idx*idx);
                     });
 
                     array.to_cpu(); // <-- check on CPU
                     for(int i=0; i<array.size; i++){
-                        CHECK(array[i] == element_t(i));
+                        CHECK(array[i] == i*i);
                     }
                 }
             }
+        }
+    }
 
-            SUBCASE("Another syntax for a transformation") {
-                array.for_each(
+    SCENARIO("GPU Array transformation") {
+        GIVEN("A GPU array") {
+            int size = 10;
+            using element_t = int;
+
+            auto array = gpu_array<element_t>(size);
+            array.for_each([]__device__ 
+                (element_t &el, int i) {
+                    el = i;
+            });
+
+            WHEN("A new array is obtained as a transformation of it") {
+
+                auto squares = array.transform<pair<element_t>>(
                     [] __device__ (element_t &el, int idx) {
-                        el = element_t(idx * idx);
+                        return pair<element_t>{el, el*el};
                 });
 
+                THEN("The values on GPU are changed accordingly") {
 
-                // Check on gpu
-                array.for_each(
-                    [] __device__ (element_t val, int idx){
-                        assert(val == element_t(idx*idx));
-                });
+                    squares.for_each( // <-- check on GPU
+                        [] __device__ (pair<element_t> p, int idx) {
+                            assert(p.first == idx);
+                            assert(p.second == idx*idx);
+                    });
 
-                // Check on cpu
-                array.to_cpu();
-                for(int i=0; i<array.size; i++){
-                    CHECK(array[i] == element_t(i*i));
+                    squares.to_cpu(); // <-- check on CPU
+                    for(int i=0; i<squares.size; i++){
+                        CHECK(squares[i].first == i);
+                        CHECK(squares[i].second == i*i);
+                    }
                 }
             }
-
         }
     }
 
