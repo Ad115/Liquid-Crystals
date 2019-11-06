@@ -35,24 +35,6 @@ void set_random_positions(gpu_array<ParticleT> &particles, double side_length) {
     });
 }
 
-class random_positions {
-public:
-    double side_length;
-
-    random_positions(double L): side_length(L) {};
-
-    template<class ParticleT>
-    random_positions(gpu_array<ParticleT> &particles, double L)
-        : side_length(L) {
-        
-        set_random_positions(particles, side_length);
-    }
-
-    template<class ParticleT>
-    void operator() (gpu_array<ParticleT> &particles) {
-        set_random_positions(particles, side_length);
-    }
-};
 
 // ---
 
@@ -70,22 +52,3 @@ void set_random_velocities(gpu_array<ParticleT> &particles, double max_speed=1) 
             p.velocity = random_vector<vector_t>(idx, rng, -max_speed, max_speed);
     });
 }
-
-class random_velocities {
-public:
-    double max_speed;
-
-    random_velocities(double s): max_speed(s) {};
-
-    template<class ParticleT>
-    random_velocities(gpu_array<ParticleT> &particles, double s)
-        : max_speed(s) {
-        
-        set_random_velocities(particles, s);
-    }
-
-    template<class ParticleT>
-    void operator() (gpu_array<ParticleT> &particles) {
-        set_random_velocities(particles, max_speed);
-    }
-};

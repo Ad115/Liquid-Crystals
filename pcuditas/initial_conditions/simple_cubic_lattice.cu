@@ -33,22 +33,3 @@ void arrange_on_cubic_lattice(gpu_array<ParticleT> &particles, double side_lengt
     });
 }
 
-class simple_cubic_lattice {
-public:
-    double side_length;
-
-    simple_cubic_lattice(double L): side_length(L) {};
-
-    template<class ParticleT>
-    simple_cubic_lattice(gpu_array<ParticleT> &particles, double L)
-        : side_length(L) {
-        
-        arrange_on_cubic_lattice(particles, side_length);
-    }
-
-    template<class ParticleT>
-    void operator() (gpu_array<ParticleT> &particles) {
-        arrange_on_cubic_lattice(particles, side_length);
-    }
-};
-
