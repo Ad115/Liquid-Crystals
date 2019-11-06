@@ -37,14 +37,15 @@ TEST_SUITE("move_to_origin transformation specification") {
             using particle_t = SimpleParticle;
             using vector_t = particle_t::vector_type;
 
-            auto particles = gpu_array<particle_t>(100);
-            particles.for_each([] __device__ (particle_t &p, size_t idx) {
-                // Initial positions at distinct arbitrary unit vectors
-                p.position = {
-                    sin(idx)*cos(idx*idx), 
-                    sin(idx)*sin(idx*idx),
-                    cos(idx)};
-            });
+            auto particles 
+                = gpu_array<particle_t>(100,
+                    [] __device__ (particle_t &p, size_t idx) {
+                        // Initial positions at distinct arbitrary unit vectors
+                        p.position = {
+                            sin(idx)*cos(idx*idx), 
+                            sin(idx)*sin(idx*idx),
+                            cos(idx)};
+                    });
 
             // Verify no vector is zero
             // --> on device
