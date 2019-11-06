@@ -22,12 +22,12 @@ public:
         using vector_t = typename ParticleT::vector_type;
 
         auto kinetic_energies 
-            = particles.transform<double>(
+            = particles.template transform<double>(
                 []__device__ (ParticleT &p, int idx) {
 
                     auto vel = p.velocity;
 
-                    return 1/2. * (vel * vel);
+                    return (double)(1/2. * (vel * vel));
             });
     
         auto total_kinetic_energy = 
