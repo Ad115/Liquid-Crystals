@@ -52,7 +52,7 @@ using SimpleParticle = Particle<EuclideanVector<3, double>>;
 
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // operator typeid
 
 TEST_SUITE("Particle specification") {

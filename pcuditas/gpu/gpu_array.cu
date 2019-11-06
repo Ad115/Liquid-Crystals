@@ -241,7 +241,7 @@ class gpu_array {
 
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // operator typeid
 #include <assert.h>
 

@@ -68,7 +68,7 @@ public:
 */
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // operator typeid
 
 #include "pcuditas/vectors/EuclideanVector.cu"

@@ -76,7 +76,7 @@ public:
 
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // typeid
 #include <math.h> // sqrt, pow
 #include "pcuditas/environments/EmptySpace.cu"

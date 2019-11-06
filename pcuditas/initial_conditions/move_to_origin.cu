@@ -25,7 +25,7 @@ void move_to_origin(gpu_array<ParticleT> &particles) { /*
 
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // operator typeid
 
 TEST_SUITE("move_to_origin transformation specification") {

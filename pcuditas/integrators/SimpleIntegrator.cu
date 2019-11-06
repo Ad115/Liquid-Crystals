@@ -89,7 +89,7 @@ public:
 
 #ifdef __TESTING__
 
-#include "doctest.h"
+#include "tests/doctest.h"
 #include <typeinfo>   // operator typeid
 #include "pcuditas/initial_conditions/random.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
