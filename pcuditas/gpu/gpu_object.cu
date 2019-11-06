@@ -116,6 +116,11 @@ gpu_object<T> gpu_object_from(T object) {
     return gpu_object<T>{object};
 }
 
+template <typename T>
+gpu_object<T> in_gpu(T object) {
+    return gpu_object<T>{object};
+}
+
 /* -----------------------------------------------------------------------
 
  The following is executable documentation as described in Kevlin Henney's talk 
