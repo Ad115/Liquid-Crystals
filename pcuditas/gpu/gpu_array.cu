@@ -53,7 +53,10 @@ void _for_each_kernel(T *gpu_array, size_t n, Transformation fn) {
 
 template<typename T, typename Reduction>
 __global__
-void _reduce_kernel(T *gpu_array, size_t n, T *out, Reduction fn) { /*
+void _reduce_kernel(
+        T *gpu_array, size_t n, 
+        T *out, 
+        Reduction fn, T initial_value=T{}) { /*
     Log-reduction based from the one in the book "The CUDA Handbook" by 
     Nicholas Wilt.
     */
@@ -62,7 +65,7 @@ void _reduce_kernel(T *gpu_array, size_t n, T *out, Reduction fn) { /*
 
     const int tid = threadIdx.x;
 
-    auto reduced = T{};
+    auto reduced = initial_value;
     for (int i = blockIdx.x * blockDim.x + tid; 
          i < n; 
          i += blockDim.x * gridDim.x) {
@@ -121,16 +124,17 @@ class gpu_array {
         return _gpu_pointer;
     }
     
-    void to_cpu() {
+    T *to_cpu() {
         CUDA_CALL(cudaMemcpy(
             _cpu_pointer, _gpu_pointer, 
             size*sizeof(T), 
             cudaMemcpyDeviceToHost
         ));
+
+        return _cpu_pointer;
     }
 
     T *cpu_pointer() const {
-        to_cpu();
         return _cpu_pointer;
     }
 
