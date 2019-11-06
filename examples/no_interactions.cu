@@ -22,7 +22,7 @@ int main() {
     });
 
     auto move = SimpleIntegrator{};
-    auto environment = gpu_object_from(EmptySpace{});
+    auto environment = in_gpu(EmptySpace{});
     std::ofstream output("output.xyz");
 
     for (int i=0; i < 100; ++i) {

@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     set_random_velocities(particles);
 
     auto move = VelocityVertlet{};
-    auto environment = gpu_object_from(PeriodicBoundaryBox{30.});
+    auto environment = in_gpu(PeriodicBoundaryBox{30.});
 
     for (int i=0; i < 50000; ++i) {
         move(particles, environment, time_step, 
