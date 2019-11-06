@@ -81,7 +81,7 @@ SCENARIO("Empty space on GPU") {
 
     GIVEN("Empty, infinite space as an object in GPU") {
 
-        auto empty_space = gpu_object_from(EmptySpace{});
+        auto empty_space = in_gpu(EmptySpace{});
         using vector_t = EuclideanVector<3>;
 
         WHEN("Boundary conditions are applied on vectors in CPU") {

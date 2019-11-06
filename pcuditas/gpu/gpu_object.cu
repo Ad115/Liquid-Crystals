@@ -112,11 +112,6 @@ class gpu_object {
 };
 
 template <typename T>
-gpu_object<T> gpu_object_from(T object) {
-    return gpu_object<T>{object};
-}
-
-template <typename T>
 gpu_object<T> in_gpu(T object) {
     return gpu_object<T>{object};
 }
@@ -179,15 +174,15 @@ TEST_SUITE("GPU object specification") {
 
         GIVEN("A CPU object") {
             using element_t = simple_array<3>;
-            element_t cpu = {0,1,2};
+            element_t cpu_obj = {0,1,2};
 
             WHEN("A GPU object is initialized to mirror it") {
-                auto gpu = gpu_object_from(cpu);
+                auto gpu_obj = in_gpu(cpu_obj);
 
                 THEN("The object is represented correctly") {
 
                     // <-- Check on GPU
-                    gpu.call_on_gpu([] __device__ (element_t &obj) {
+                    gpu_obj.call_on_gpu([] __device__ (element_t &obj) {
 
                             assert(obj.size == element_t::size);
 
@@ -197,10 +192,10 @@ TEST_SUITE("GPU object specification") {
 
                     // <-- Check on CPU
 
-                    using gpu_element_t = decltype(gpu)::value_t;
+                    using gpu_element_t = decltype(gpu_obj)::value_t;
                     CHECK(typeid(gpu_element_t) == typeid(element_t));
                     
-                    auto cpu_ = gpu.to_cpu();
+                    auto cpu_ = gpu_obj.to_cpu();
                     for(int i=0; i<3; i++) {
                         CHECK(cpu_.values[i] == i);
                     }
@@ -211,19 +206,19 @@ TEST_SUITE("GPU object specification") {
 
     SCENARIO("GPU object transformation") {
         using element_t = simple_array<3>;
-        element_t cpu = {0,1,2};
+        element_t cpu_obj = {0,1,2};
 
         GIVEN("A GPU object") {
-            auto gpu = gpu_object_from(cpu);
+            auto gpu_obj = in_gpu(cpu_obj);
 
             WHEN("A transformation is used to change the value on GPU") {
-                gpu.transform([] __device__ (element_t obj) {
+                gpu_obj.transform([] __device__ (element_t obj) {
                     obj.values[2] = 0;
                     return obj;
                 });
 
                 THEN("The changes persist on GPU") {
-                    gpu.call_on_gpu([] __device__ (element_t obj) {
+                    gpu_obj.call_on_gpu([] __device__ (element_t obj) {
                         assert(obj.values[0] == 0);
                         assert(obj.values[1] == 1);
                         assert(obj.values[2] == 0);
@@ -231,7 +226,7 @@ TEST_SUITE("GPU object specification") {
                 }
 
                 AND_THEN("The changes persist on CPU") {
-                    auto cpu_ = gpu.to_cpu();
+                    auto cpu_ = gpu_obj.to_cpu();
                     CHECK(cpu_.values[0] == 0);
                     CHECK(cpu_.values[1] == 1);
                     CHECK(cpu_.values[2] == 0);
@@ -239,19 +234,19 @@ TEST_SUITE("GPU object specification") {
             }
 
             SUBCASE("Alternative syntax for GPU object transformation") {
-                gpu.call_on_gpu([] __device__ (element_t &obj) {
+                gpu_obj.call_on_gpu([] __device__ (element_t &obj) {
                     obj.values[2] = 0;
                 });
 
                 // check on GPU
-                gpu.call_on_gpu([] __device__ (element_t obj) {
+                gpu_obj.call_on_gpu([] __device__ (element_t obj) {
                     assert(obj.values[0] == 0);
                     assert(obj.values[1] == 1);
                     assert(obj.values[2] == 0);
                 });
 
                 // check on CPU
-                auto cpu_ = gpu.to_cpu();
+                auto cpu_ = gpu_obj.to_cpu();
                 CHECK(cpu_.values[0] == 0);
                 CHECK(cpu_.values[1] == 1);
                 CHECK(cpu_.values[2] == 0);
