@@ -71,10 +71,14 @@ TEST_SUITE("XYZ format output specification") {
             using vector_t = EuclideanVector<3>;
             using particle_t = Particle<vector_t>;
 
-            auto particles = gpu_array<particle_t>(3);
-            particles.for_each([] __device__ (particle_t &p, int i) {
-                p.position = vector_t{(float)i, (float)(i*i), (float)(i*i + i)};
-            });
+            auto particles 
+                = gpu_array<particle_t>( 3,
+                    [] __device__ (particle_t &p, int i) {
+                        p.position = vector_t{
+                            (float)i, 
+                            (float)(i*i), 
+                            (float)(i*i + i)};
+                    });
 
             WHEN("The system is written to the XYZ format") {
                 std::stringstream stream;
