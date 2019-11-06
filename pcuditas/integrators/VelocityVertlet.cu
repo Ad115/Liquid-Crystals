@@ -25,7 +25,9 @@ public:
     void integration_step(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &environment,
-            double dt = 0.001) { /*
+            double dt = 0.001,
+            int n_blocks = 1024,
+            int threads_per_block = 32) { /*
         * Implementation of a velocity Vertlet integrator.
         * See: http://www.pages.drexel.edu/~cfa22/msim/node23.html#sec:nmni
         * 
@@ -41,7 +43,7 @@ public:
         update_velocities(particles, dt);
 
         // r(t + dt)  -->  f(t + dt)
-        update_forces(particles, environment);
+        update_forces(particles, environment, n_blocks, threads_per_block);
 
         // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
         update_velocities(particles, dt);
@@ -81,8 +83,10 @@ public:
     template <class ParticleT, class EnvironmentT>
     void update_forces(
                 gpu_array<ParticleT> &particles, 
-                gpu_object<EnvironmentT> &env) {
-        update_forces_shared(particles, env);
+                gpu_object<EnvironmentT> &env,
+                int n_blocks,
+                int threads_per_block) {
+        update_forces_shared(particles, env, n_blocks, threads_per_block);
     }
 
     template<typename SystemT>
@@ -102,9 +106,11 @@ public:
     void operator()(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
-            double dt = 0.001) {
+            double dt = 0.001,
+            int n_blocks = 1024,
+            int threads_per_block = 32) {
 
-        integration_step(particles, env, dt);
+        integration_step(particles, env, dt, n_blocks, threads_per_block);
     }
 };
 
