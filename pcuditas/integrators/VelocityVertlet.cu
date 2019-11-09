@@ -3,7 +3,7 @@
 #include "pcuditas/gpu/gpu_array.cu"
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/environments/EmptySpace.cu"
-#include "pcuditas/integrators/force_calculation/shared.cu"
+#include "pcuditas/integrators/force_calculation/shared2.cu"
 
 #include <curand.h>
 #include <curand_kernel.h>
@@ -86,7 +86,7 @@ public:
                 gpu_object<EnvironmentT> &env,
                 int n_blocks,
                 int threads_per_block) {
-        update_forces_shared(particles, env, n_blocks, threads_per_block);
+        update_forces_shared2(particles, env, n_blocks, threads_per_block);
     }
 
     template <class ParticleT>
