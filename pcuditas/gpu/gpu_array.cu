@@ -366,6 +366,23 @@ TEST_SUITE("GPU Array specification") {
             }
 
         }
+
+        SUBCASE("Reduction on a very large array") {
+            auto n = 500000;
+            auto nums = gpu_array<int>(n, 
+                [] __device__ (int &el, int idx) {
+                    el = idx;
+            });
+
+            auto addition = 
+                [] __device__ (int a, int b) {
+                    return a + b;
+            };
+
+            auto sum = nums.reduce(addition).to_cpu();
+
+            CHECK(sum == n*(n-1)/2);
+        }
     }
 }
 #endif
