@@ -187,14 +187,14 @@ class gpu_array {
 
         unsigned int shared_memory_size = threads_per_block * sizeof(T);
 
-        auto thread_partials = gpu_array<T>(threads_per_block);
+        auto block_partials = gpu_array<T>(n_blocks);
         _reduce_kernel<<<n_blocks, threads_per_block, shared_memory_size>>>(
-            _gpu_pointer, size, thread_partials.gpu_pointer(), reduce_fn
+            _gpu_pointer, size, block_partials.gpu_pointer(), reduce_fn
         );
 
         auto out = gpu_object<T>();
         _reduce_kernel<<<1, threads_per_block, shared_memory_size>>>(
-           thread_partials.gpu_pointer(), size, out.gpu_pointer(), reduce_fn
+            block_partials.gpu_pointer(), n_blocks, out.gpu_pointer(), reduce_fn
         );
 
         return out;

@@ -19,9 +19,9 @@ int main() {
     set_random_velocities(particles);
 
     // Measure initial temperature
-    // std::cout
-    //     << "Initial temperature: " << Temperature::measure(particles)
-    //     << std::endl;
+     std::cout
+        << "Initial temperature: " << Temperature::measure(particles)
+        << std::endl;
 
     auto environment = in_gpu(PeriodicBoundaryBox{30.});
     auto thermostat  = Temperature{0.1};
