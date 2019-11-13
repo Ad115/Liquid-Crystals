@@ -27,13 +27,13 @@ public:
 
                     auto vel = p.velocity;
 
-                    return (double)(1/2. * (vel * vel));
+                    return (double)(1/2. * (vel*vel));
             });
     
-        auto total_kinetic_energy = 
-            kinetic_energies.reduce( 
-                [] __device__ (double partial, double k){
-                    return partial + k;
+        auto total_kinetic_energy 
+            = kinetic_energies.reduce( 
+                [] __device__ (double a, double b){
+                    return a+b;
                 } 
             ).to_cpu();
         
