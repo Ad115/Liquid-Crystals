@@ -3,7 +3,7 @@
 #include "pcuditas/gpu/gpu_array.cu"
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/environments/EmptySpace.cu"
-#include "force_calculation.cu"
+#include "force_calculation/shared2.cu"
 
 #include <curand.h>
 #include <curand_kernel.h>
@@ -56,7 +56,7 @@ public:
     void update_forces(
                 gpu_array<ParticleT> &particles, 
                 gpu_object<EnvironmentT> &env) {
-        update_forces_shared(particles, env);
+        update_forces_shared2(particles, env);
     }
 
     template <class ParticleT>
@@ -122,8 +122,8 @@ TEST_SUITE("Simple Integrator specification") {
 
                     auto are_colineal = [] (vector_t v1, vector_t v2) {
                         return (
-                            (v1.unit_vector() - v2.unit_vector()).magnitude() 
-                            == doctest::Approx(0.)
+                            (v1 * v2) / (v1.magnitude() * v2.magnitude() )
+                            == doctest::Approx(1.)
                         );
                     };
                     

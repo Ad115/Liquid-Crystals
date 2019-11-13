@@ -35,7 +35,7 @@ int main() {
         }
 
         // Increase temperature
-        thermostat.setpoint += 5e-4;
+        thermostat.setpoint += 5e-5;
         thermostat(particles);
 
         // Measure temperature
