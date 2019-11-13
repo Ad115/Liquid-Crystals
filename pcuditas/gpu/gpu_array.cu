@@ -369,6 +369,8 @@ TEST_SUITE("GPU Array specification") {
 
         SUBCASE("Reduction on a very large array") {
             auto n = 500000;
+            
+            // Initialize to {0, 1, 2, 3, 4...n}
             auto nums = gpu_array<int>(n, 
                 [] __device__ (int &el, int idx) {
                     el = idx;
