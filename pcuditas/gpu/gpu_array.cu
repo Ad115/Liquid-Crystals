@@ -12,88 +12,8 @@ se puede utilizar en un kernel.
 */
 
 #include "pcuditas/gpu/macros.cu"
+#include "pcuditas/gpu/kernels.cu"
 #include "pcuditas/gpu/gpu_object.cu"
-
-
-template<typename T>
-__global__
-void _init_array_kernel(T *gpu_array, size_t n) {
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
-        i < n; 
-        i += blockDim.x * gridDim.x) 
-    {
-        new (&gpu_array[i]) T();
-    }
-}
-
-template<class T, class TransformedT, class TransformationT>
-__global__
-void _transform_kernel(
-        T *from_array, size_t n, 
-        TransformedT *to_array,
-        TransformationT transform) {
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
-        i < n; 
-        i += blockDim.x * gridDim.x) 
-    {
-        to_array[i] = transform(from_array[i], i);
-    }
-}
-
-template<typename T, typename Transformation>
-__global__
-void _for_each_kernel(T *gpu_array, size_t n, Transformation fn) {
-
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; 
-        i < n; 
-        i += blockDim.x * gridDim.x) 
-    {
-        fn(gpu_array[i], i);
-    }
-}
-
-template<typename T, typename Reduction>
-__global__
-void _reduce_kernel(
-        T *gpu_array, size_t n, 
-        T *out, 
-        Reduction fn, T initial_value=T{}) { /*
-    Log-reduction based from the one in the book "The CUDA Handbook" by 
-    Nicholas Wilt.
-    */
-
-    extern __shared__ T partials[];
-
-    const int tid = threadIdx.x;
-
-    auto reduced = initial_value;
-    for (int i = blockIdx.x * blockDim.x + tid; 
-         i < n; 
-         i += blockDim.x * gridDim.x) {
-
-        reduced = fn(reduced, gpu_array[i]);
-    }
-    partials[tid] = reduced;
-    __syncthreads();
-
-
-    for (int active_threads = blockDim.x / 2;
-         active_threads > 0;
-         active_threads /= 2) {
-        
-        auto is_active_thread = tid < active_threads;
-        if (is_active_thread) {
-            partials[tid] = fn(partials[tid], partials[tid + active_threads]);
-        }
-        __syncthreads();
-    }
-
-    if (tid == 0) {
-        out[blockIdx.x] = partials[0];
-    }
-}
 
 
 
@@ -112,7 +32,7 @@ class gpu_array {
         // <-- Allocate and initialize on GPU
         CUDA_CALL(cudaMalloc(&_gpu_pointer, n * sizeof(T)));      
 
-        _init_array_kernel<<<128,32>>>(_gpu_pointer, n);
+        init_array_kernel<<<128,32>>>(_gpu_pointer, n);
 
 
         // <-- Allocate and initialize on CPU
@@ -123,10 +43,20 @@ class gpu_array {
         }
     }
 
-    // Instantiate with a function to initialize each value
     template <class InitializerT>
     gpu_array(size_t n, InitializerT init_fn)
-        : gpu_array(n) { 
+            : gpu_array(n) { /*
+
+        Instantiate with a function to initialize each value.
+
+        Example:
+            // Initialize to {0, 1, 2, 3, 4...9}
+            auto array = gpu_array<int>(10, 
+                []__device__ (int &el, int i) {
+                    el = i;
+            });
+        */
+
         // Apply the initialization function to each element
         (*this).for_each(init_fn);
     }
@@ -135,7 +65,7 @@ class gpu_array {
         return _gpu_pointer;
     }
     
-    T *to_cpu() {
+    T *to_cpu() { 
         CUDA_CALL(cudaMemcpy(
             _cpu_pointer, _gpu_pointer, 
             size*sizeof(T), 
@@ -157,11 +87,29 @@ class gpu_array {
     gpu_array<TransformedT> transform(
             TransformationT gpu_fn,
             int n_blocks = 1024, 
-            int n_threads = 32 ){
+            int n_threads = 32 ) { /*
+
+        Create a new array with the transformed elements.
+        
+        Example:
+
+            // Create gpu_array "array" with the numbers 0 to 9
+            auto array = gpu_array<int>(10, 
+                []__device__ (int &el, int i) {
+                    el = i;
+            });
+            
+            
+            // Transform to pairs of the number and it's squares
+            auto squares = array.transform<int2>(
+                [] __device__ (int2 el, int idx) {
+                    return make_int2(el, el*el);
+            });
+    */
 
         auto transformed = gpu_array<TransformedT>{this->size};
 
-        _transform_kernel<<<n_blocks, n_threads>>>(
+        transform_kernel<<<n_blocks, n_threads>>>(
             _gpu_pointer, size, 
             transformed.gpu_pointer(),
             gpu_fn
@@ -174,8 +122,30 @@ class gpu_array {
     gpu_array<T>& for_each(
             FunctionT gpu_fn,
             int n_blocks = 1024, 
-            int n_threads = 32 ) {
-        _for_each_kernel<<<n_blocks, n_threads>>>(_gpu_pointer, size, gpu_fn);
+            int n_threads = 32 ) {/*
+
+        Apply the function in-place for each element of the array.
+        
+        Example:
+
+            // Create gpu_array "array" with the numbers 0 to 9
+            auto array = gpu_array<int>(10, 
+                []__device__ (int &el, int i) {
+                    el = i;
+            });
+            
+            
+            // Make a linear transformation
+            int a = 12;
+            int b = 34;
+
+            array.for_each(
+                [a,b] __device__ (int2 &el, int idx) {
+                    el = a*el + b;
+            });
+        */
+
+        for_each_kernel<<<n_blocks, n_threads>>>(_gpu_pointer, size, gpu_fn);
         return *this;
     }
 
@@ -183,17 +153,36 @@ class gpu_array {
     gpu_object<T> reduce(
             ReductionT reduce_fn, 
             int n_blocks = 128, 
-            int threads_per_block = 32 /* <-- Must be a power of 2! */ ) {
+            int threads_per_block = 32 /* <-- Must be a power of 2! */ ) { /*
+        
+        Perform a reduction of the elements of the array using the provided function.
+
+        Example:
+
+            // Create gpu_array "array" with the numbers 0 to 9
+            auto array = gpu_array<int>(10, 
+                []__device__ (int &el, int i) {
+                    el = i;
+            });
+            
+            
+            // Multipliy the elements in GPU
+            gpu_object<int> product 
+                = array.reduce(
+                    []__device__ (int a, int b) {
+                        return a * b
+                });
+        */
 
         unsigned int shared_memory_size = threads_per_block * sizeof(T);
 
         auto block_partials = gpu_array<T>(n_blocks);
-        _reduce_kernel<<<n_blocks, threads_per_block, shared_memory_size>>>(
+        reduce_2step_kernel<<<n_blocks, threads_per_block, shared_memory_size>>>(
             _gpu_pointer, size, block_partials.gpu_pointer(), reduce_fn
         );
 
         auto out = gpu_object<T>();
-        _reduce_kernel<<<1, threads_per_block, shared_memory_size>>>(
+        reduce_2step_kernel<<<1, threads_per_block, shared_memory_size>>>(
             block_partials.gpu_pointer(), n_blocks, out.gpu_pointer(), reduce_fn
         );
 
