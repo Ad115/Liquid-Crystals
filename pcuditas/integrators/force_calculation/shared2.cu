@@ -2,25 +2,43 @@
 
 #include "pcuditas/gpu/gpu_array.cu"
 
-template<class ParticleT, class EnvironmentT>
+template <class ContainerT>
+struct force_calculation {
+    ContainerT *box;
+
+    __host__ __device__
+    force_calculation(ContainerT *box_) 
+        : box(box_) {}
+
+    template <typename ParticleT>
+    using Vector_t = typename ParticleT::vector_type;
+    
+    template <typename ParticleT>
+    __host__ __device__
+    Vector_t<ParticleT> operator()(ParticleT p1, ParticleT p2) {
+        // Calculate force
+        return p1.interaction_force_with(p2, *box);
+    }
+
+
+};
+
+template<class ParticleT, class ForceFn, class ForceT>
 __global__ 
 void update_forces_shared2_kernel(
         ParticleT *particles, int n_particles, 
-        EnvironmentT *env_ptr) {
+        ForceFn force_fn, ForceT zero_force) {
 
-    using vector_t = typename ParticleT::vector_type;
-    extern __shared__ vector_t forces_sh[];
-
-    EnvironmentT env = (*env_ptr);
+    extern __shared__ ForceT forces_sh[];
 
     for (int i = blockIdx.x;
          i < n_particles; 
          i += gridDim.x) {
 
-        auto self_pos = particles[i].position;
+        auto self = particles[i];
 
         // Initialize force to zero
-        forces_sh[threadIdx.x] = vector_t::zero();
+        forces_sh[threadIdx.x] = zero_force;
         __syncthreads();
         __threadfence();
 
@@ -31,17 +49,11 @@ void update_forces_shared2_kernel(
             // Each thread in the block calculates the 
             // interaction between particle i and (j + tid) 
             int other_idx = j + threadIdx.x;
+            auto other = particles[j];
 
-            auto force = vector_t::zero();
-            if (other_idx < n_particles) {
-
-                // Calculate force
-                auto other_pos = particles[other_idx].position;
-                auto dr = env.distance_vector(other_pos, self_pos);
-
-                force = (i != other_idx) 
-                    ? ParticleT::force_law(dr) 
-                    : vector_t::zero();
+            auto force = zero_force;
+            if (other_idx < n_particles && i != other_idx) {
+                force = force_fn(self, other);
             }
 
             // Save in shared memory
@@ -67,23 +79,19 @@ void update_forces_shared2_kernel(
 }
 
 
-template<class ParticleT, class EnvironmentT>
+template<class ParticleT, class ForceFn, class ForceT>
 void update_forces_shared2(
             gpu_array<ParticleT> &particles,
-            gpu_object<EnvironmentT> &env,
+            ForceFn force_fn,
+            ForceT zero_force,
             unsigned int block_size = 512,
             unsigned int threads_per_block = 64) {
-        
-        // Launch the kernel. As you can see we are not copying memory from CPU to GPU
-        // as you would normally do with cudaMemcpy(), as we don't need to! The
-        // vectors live in GPU already so we just need to know where they start (GPU
-        // pointer) and pass it to the kernel.
 
         unsigned int shared_memory_size = (
-            threads_per_block * sizeof(typename ParticleT::vector_type)
+            threads_per_block * sizeof(ForceT)
         );
         update_forces_shared2_kernel<<<block_size, threads_per_block, shared_memory_size>>>(
             particles.gpu_pointer(), particles.size, 
-            env.gpu_pointer()
+            force_fn, zero_force
         );
 }

@@ -86,7 +86,14 @@ public:
                 gpu_object<EnvironmentT> &env,
                 int n_blocks,
                 int threads_per_block) {
-        update_forces_shared2(particles, env, n_blocks, threads_per_block);
+
+        auto interaction = force_calculation<EnvironmentT>{env.gpu_pointer()};
+
+        using vector_t = typename ParticleT::vector_type;
+        update_forces_shared2(
+            particles, interaction, vector_t::zero(),
+            n_blocks, threads_per_block
+        );
     }
 
     template <class ParticleT>
