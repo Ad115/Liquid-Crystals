@@ -2,25 +2,6 @@
 
 #include "pcuditas/gpu/gpu_array.cu"
 
-template <class ContainerT>
-struct force_calculation {
-    ContainerT *box;
-
-    __host__ __device__
-    force_calculation(ContainerT *box_) 
-        : box(box_) {}
-
-    template <typename ParticleT>
-    using Vector_t = typename ParticleT::vector_type;
-    
-    template <typename ParticleT>
-    __host__ __device__
-    Vector_t<ParticleT> operator()(ParticleT &p1, ParticleT &p2) {
-        // Calculate force
-        return ParticleT::interaction::interaction_force(p1, p2, *box);
-    }
-};
-
 
 
 template<class ParticleT, class ForceFn, class ForceT, class ForceSaveFn>
