@@ -7,8 +7,8 @@ class XYZ {
 
 public:
 
-    template <class ParticleT>
-    static void write(std::ostream& stream, gpu_array<ParticleT> &particles) {/*
+    template <class ParticlesT>
+    static void write(std::ostream& stream, ParticlesT &particles) {/*
         * Output the positions of the particles in the XYZ format.
         * The format consists in a line with the number of particles,
         * then a comment line followed by the space-separated coordinates 
@@ -23,7 +23,6 @@ public:
         *   2.0 2.0 2.0
         */
 
-        particles.to_cpu();
         stream << particles.size << "\n";
         for (auto p: particles) {
             stream << "\n";
@@ -83,7 +82,7 @@ TEST_SUITE("XYZ format output specification") {
             WHEN("The system is written to the XYZ format") {
                 std::stringstream stream;
 
-                XYZ::write(stream, particles);
+                XYZ::write(stream, particles.to_cpu());
 
                 THEN("The output has the correct format") {
                     std::string expected = (

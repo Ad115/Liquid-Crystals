@@ -16,6 +16,6 @@ int main() {
 
     for (int i=0; i < 100; ++i) {
         move(particles);
-        output(particles);
+        output(particles.to_cpu());
     }
 }

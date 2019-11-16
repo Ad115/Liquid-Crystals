@@ -68,14 +68,14 @@ class gpu_array {
         return _gpu_pointer;
     }
     
-    T *to_cpu() { 
+    gpu_array<T>& to_cpu() { 
         CUDA_CALL(cudaMemcpy(
             _cpu_pointer, _gpu_pointer, 
             size*sizeof(T), 
             cudaMemcpyDeviceToHost
         ));
 
-        return _cpu_pointer;
+        return *this;
     }
 
     T *cpu_pointer() const {

@@ -34,7 +34,7 @@ int main() {
     for (int i=0; i < 50000; ++i) {
 
         if (i%10 == 0) { // Write to output file
-            XYZ::write(output, particles);
+            XYZ::write(output, particles.to_cpu());
         }
 
         // Increase temperature

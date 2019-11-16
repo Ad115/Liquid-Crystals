@@ -27,6 +27,6 @@ int main() {
 
     for (int i=0; i < 100; ++i) {
         move(particles, environment);
-        XYZ::write(output, particles);
+        XYZ::write(output, particles.to_cpu());
     }
 }
