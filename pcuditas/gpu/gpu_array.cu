@@ -14,6 +14,7 @@ se puede utilizar en un kernel.
 #include "pcuditas/gpu/macros.cu"
 #include "pcuditas/gpu/kernels.cu"
 #include "pcuditas/gpu/gpu_object.cu"
+#include <assert.h>
 
 
 
@@ -29,6 +30,8 @@ class gpu_array {
     using element_t = T;
     
     gpu_array(size_t n): size(n) {
+        assert(size > 0);
+
         // <-- Allocate and initialize on GPU
         CUDA_CALL(cudaMalloc(&_gpu_pointer, n * sizeof(T)));      
 
