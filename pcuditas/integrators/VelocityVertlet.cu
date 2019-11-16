@@ -90,8 +90,17 @@ public:
         auto interaction = force_calculation<EnvironmentT>{env.gpu_pointer()};
 
         using vector_t = typename ParticleT::vector_type;
+
+        auto update_force = 
+            [particles_gpu=particles.gpu_pointer()]
+            __device__
+            (ParticleT &p, vector_t &force, int idx) {
+                p.force = force;
+        };
+
+        
         update_forces_shared2(
-            particles, interaction, vector_t::zero(),
+            particles, interaction, vector_t::zero(), update_force,
             n_blocks, threads_per_block
         );
     }

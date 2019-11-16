@@ -32,7 +32,7 @@ public:
         * Get the distance to the minimum image.
         */
         double half_length = side_length/2;
-        VectorT dr = r2 - r1;
+        VectorT dr = r1 - r2;
 
         for(int D=0; D<dr.dimensions; D++) {
 
@@ -132,7 +132,7 @@ SCENARIO("Periodic boundary box specification") {
                 vector_t center = {L/2, L/2, L/2}; // Center of the box
                 vector_t v = {L/4, L/4, L/4}; // Halfway towards the center
 
-                CHECK(pacman_box.distance_vector(center, v) == (v - center));
+                CHECK(pacman_box.distance_vector(center, v) == (center - v));
             }
 
             THEN("If objects are separated enough within the boundaries,"
@@ -142,7 +142,7 @@ SCENARIO("Periodic boundary box specification") {
                 vector_t v = {L, L, L}; // The farthest corner
                 vector_t expected_distance = {L/4, L/4, L/4}; // Wrapped around
                 
-                CHECK(pacman_box.distance_vector(v, u) == expected_distance);
+                CHECK(pacman_box.distance_vector(u, v) == expected_distance);
             }
         }
     }
