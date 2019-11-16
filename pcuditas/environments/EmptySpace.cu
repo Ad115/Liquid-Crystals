@@ -12,7 +12,7 @@ public:
     template <class VectorT>
     __host__ __device__
     VectorT distance_vector(const VectorT& p1, const VectorT& p2) const {
-        return (p2 - p1);
+        return (p1 - p2);
     }
 };
 
