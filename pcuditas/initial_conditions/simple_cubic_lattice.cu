@@ -1,4 +1,5 @@
 #include "pcuditas/gpu/gpu_array.cu"
+#include "pcuditas/cpu/cpu_array.cu"
 
 template <typename VectorT>
 __host__ __device__ 
@@ -28,6 +29,17 @@ void arrange_on_cubic_lattice(gpu_array<ParticleT> &particles, double side_lengt
     particles.for_each(
         [side_length, n=particles.size] 
         __device__ (ParticleT &p, size_t idx) {
+            using vector_t = typename ParticleT::vector_type;
+            p.position = cubic_lattice_position<vector_t>(idx, side_length, n);
+    });
+}
+
+template<class ParticleT>
+void arrange_on_cubic_lattice(cpu_array<ParticleT> &particles, double side_length) {
+    int n = particles.size;
+    particles.for_each(
+        [side_length, n] 
+        (ParticleT &p, size_t idx) {
             using vector_t = typename ParticleT::vector_type;
             p.position = cubic_lattice_position<vector_t>(idx, side_length, n);
     });

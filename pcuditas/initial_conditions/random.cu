@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pcuditas/gpu/gpu_array.cu>
+#include <pcuditas/cpu/cpu_array.cu>
 #include <thrust/random.h>
 
 template <typename VectorT, typename RandomEngine>
@@ -43,6 +44,21 @@ void set_random_velocities(gpu_array<ParticleT> &particles, double max_speed=1) 
     particles.for_each(
         [max_speed] 
         __device__ (ParticleT &p, size_t idx) {
+            // Instantiate random number engine
+            thrust::default_random_engine rng(idx*1000 + idx*idx);
+            rng.discard(idx);
+
+            // Set particle position        
+            using vector_t = typename ParticleT::vector_type;
+            p.velocity = random_vector<vector_t>(idx, rng, -max_speed, max_speed);
+    });
+}
+
+template <class ParticleT>
+void set_random_velocities(cpu_array<ParticleT> &particles, double max_speed=1) {
+    particles.for_each(
+        [max_speed] 
+        (ParticleT &p, size_t idx) {
             // Instantiate random number engine
             thrust::default_random_engine rng(idx*1000 + idx*idx);
             rng.discard(idx);

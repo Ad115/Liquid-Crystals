@@ -81,6 +81,16 @@ public:
                 LennardJones, 
                 EnvironmentT>{env.gpu_pointer()};
     }
+
+    template<class EnvironmentT>
+    __host__
+    static ConstrainedInteraction<LennardJones, EnvironmentT>
+    constrained_by(EnvironmentT &env){
+        return 
+            ConstrainedInteraction<
+                LennardJones, 
+                EnvironmentT>{&env};
+    }
 };
 
 /* -----------------------------------------------------------------------
