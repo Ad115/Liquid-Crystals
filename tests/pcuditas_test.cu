@@ -13,6 +13,8 @@
 #define __TESTING__
 
 // --- Files to test
+
+// GPU
 #include "pcuditas/gpu/gpu_array.cu"
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
@@ -25,3 +27,6 @@
 #include "pcuditas/environments/EmptySpace.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
 #include "pcuditas/input_output/XYZformat.cu"
+
+// CPU
+#include "pcuditas/cpu/cpu_array.cu"
