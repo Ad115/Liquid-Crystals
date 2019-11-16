@@ -66,10 +66,8 @@ SCENARIO("Empty space specification") {
                 vector_t u = {0., 0., 0.};
                 vector_t v = {102., 0.54, -23.4};
 
-                CHECK(empty_space.distance_vector(u, v) == (v - u));
-                CHECK(empty_space.distance_vector(u, v) == v);
-                CHECK(empty_space.distance_vector(v, u) == (u - v));
-                CHECK(empty_space.distance_vector(v, u) == -v);
+                CHECK(empty_space.distance_vector(u, v) == (u - v));
+                CHECK(empty_space.distance_vector(v, u) == (v - u));
             }
         }
     }
@@ -124,8 +122,8 @@ SCENARIO("Empty space on GPU") {
                     [u,v] 
                      __device__ 
                      (EmptySpace &s) {
-                        assert(s.distance_vector(u, v) == (v - u));
-                        assert(s.distance_vector(v, u) == (u - v));
+                        assert(s.distance_vector(u, v) == (u - v));
+                        assert(s.distance_vector(v, u) == (v - u));
                         assert(s.distance_vector(u, u) == vector_t::zero());
                         assert(s.distance_vector(v, v) == vector_t::zero());
                     }

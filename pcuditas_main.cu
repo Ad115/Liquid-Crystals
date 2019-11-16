@@ -40,7 +40,7 @@ int main() {
 
         // Increase temperature
         thermostat.setpoint += 5e-5;
-        //thermostat(particles);
+        thermostat(particles);
 
         // Measure temperature
         std::cout << i 
