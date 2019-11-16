@@ -5,6 +5,7 @@
 #include "pcuditas/input_output/XYZformat.cu"
 #include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
+#include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/tools/Temperature.cu"
 
 int n_particles = 60;
@@ -25,7 +26,7 @@ int main() {
 
     auto thermostat  = Temperature{0.1};
     auto environment = in_gpu(PeriodicBoundaryBox{30.});
-    auto interaction = LennardJonesForce::constrained_by(environment);
+    auto interaction = LennardJones::constrained_by(environment);
     auto move        = VelocityVertlet{}; // integrator
     std::ofstream output{"output.xyz"};
 

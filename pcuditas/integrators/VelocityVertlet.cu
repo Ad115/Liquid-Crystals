@@ -3,7 +3,6 @@
 #include "pcuditas/gpu/gpu_array.cu"
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/environments/EmptySpace.cu"
-#include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/integrators/force_calculation/shared2.cu"
 
 #include <curand.h>

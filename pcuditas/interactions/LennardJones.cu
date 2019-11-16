@@ -23,7 +23,7 @@ struct ConstrainedInteraction {
     }
 };
 
-class LennardJonesForce {
+class LennardJones {
 
 public:
     template<class VectorT>
@@ -74,11 +74,11 @@ public:
 
     template<class EnvironmentT>
     __host__
-    static ConstrainedInteraction<LennardJonesForce, EnvironmentT>
+    static ConstrainedInteraction<LennardJones, EnvironmentT>
     constrained_by(gpu_object<EnvironmentT> &env){
         return 
             ConstrainedInteraction<
-                LennardJonesForce, 
+                LennardJones, 
                 EnvironmentT>{env.gpu_pointer()};
     }
 };
@@ -109,7 +109,7 @@ TEST_SUITE("Lennard-Jones interaction") {
             return sqrt(vec * vec);
         };
         auto force = [](vector_t dist_vector) {
-            return LennardJonesForce::force_law(dist_vector);
+            return LennardJones::force_law(dist_vector);
         };
         auto unit = [magnitude](vector_t vec) {
             return vec / magnitude(vec);

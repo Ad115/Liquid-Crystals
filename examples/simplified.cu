@@ -5,7 +5,7 @@
 #include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
 #include "pcuditas/input_output/XYZformat.cu"
-
+#include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/initial_conditions/simple_cubic_lattice.cu"
 #include "pcuditas/initial_conditions/random.cu"
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     auto move = VelocityVertlet{};
     auto environment = in_gpu(PeriodicBoundaryBox{30.});
-    auto interaction = LennardJonesForce::constrained_by(environment);
+    auto interaction = LennardJones::constrained_by(environment);
 
     for (int i=0; i < 50000; ++i) {
         move(particles, environment, interaction, time_step, 

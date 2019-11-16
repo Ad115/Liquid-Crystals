@@ -17,7 +17,6 @@
 #include "pcuditas/gpu/gpu_object.cu"
 #include "pcuditas/vectors/EuclideanVector.cu"
 #include "pcuditas/particles/SimpleParticle.cu"
-#include "pcuditas/particles/LennardJonesParticle.cu"
 #include "pcuditas/initial_conditions/move_to_origin.cu"
 #include "pcuditas/integrators/RandomWalk.cu"
 #include "pcuditas/integrators/SimpleIntegrator.cu"
