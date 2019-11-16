@@ -1,5 +1,5 @@
 #include "pcuditas/gpu.cu"
-#include "pcuditas/particles/LennardJonesParticle.cu"
+#include "pcuditas/particles/SimpleParticle.cu"
 #include "pcuditas/initial_conditions/simple_cubic_lattice.cu"
 #include "pcuditas/initial_conditions/random.cu"
 #include "pcuditas/input_output/XYZformat.cu"
@@ -12,7 +12,7 @@ double time_step = 0.003;
 
 int main() {
     // Create the particles on the GPU
-    auto particles = gpu_array<LennardJonesParticle>(n_particles);
+    auto particles = gpu_array<SimpleParticle>(n_particles);
 
     // Apply initial conditions
     arrange_on_cubic_lattice(particles, 6.);
@@ -23,8 +23,9 @@ int main() {
         << "Initial temperature: " << Temperature::measure(particles)
         << std::endl;
 
-    auto environment = in_gpu(PeriodicBoundaryBox{30.});
     auto thermostat  = Temperature{0.1};
+    auto environment = in_gpu(PeriodicBoundaryBox{30.});
+    auto interaction = LennardJonesForce::constrained_by(environment);
     auto move        = VelocityVertlet{}; // integrator
     std::ofstream output{"output.xyz"};
 
@@ -44,6 +45,6 @@ int main() {
             << std::endl;
 
         // Move one step in time
-        move(particles, environment, time_step);
+        move(particles, environment, interaction, time_step);
     }
 }

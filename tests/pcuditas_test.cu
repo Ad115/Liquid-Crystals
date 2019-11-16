@@ -22,6 +22,7 @@
 #include "pcuditas/integrators/RandomWalk.cu"
 #include "pcuditas/integrators/SimpleIntegrator.cu"
 #include "pcuditas/integrators/force_calculation/shared2.cu"
+#include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/environments/EmptySpace.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
 #include "pcuditas/input_output/XYZformat.cu"

@@ -22,10 +22,11 @@ public:
 
     VelocityVertlet() = default;
 
-    template <class ParticleT, class EnvironmentT>
+    template <class ParticleT, class EnvironmentT, class InteractionT>
     void integration_step(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &environment,
+            InteractionT interaction,
             double dt = 0.001,
             int n_blocks = 1024,
             int threads_per_block = 32) { /*
@@ -44,7 +45,7 @@ public:
         update_velocities(particles, dt);
 
         // r(t + dt)  -->  f(t + dt)
-        update_forces(particles, environment, n_blocks, threads_per_block);
+        update_forces(particles, environment, interaction, n_blocks, threads_per_block);
 
         // v(t + dt) = v(t + 1/2*dt) + 1/2*f(t + dt)*dt
         update_velocities(particles, dt);
@@ -81,14 +82,13 @@ public:
         );
     }
     
-    template <class ParticleT, class EnvironmentT>
+    template <class ParticleT, class EnvironmentT, class InteractionT>
     void update_forces(
                 gpu_array<ParticleT> &particles, 
                 gpu_object<EnvironmentT> &env,
+                InteractionT &interaction,
                 int n_blocks,
                 int threads_per_block) {
-
-        auto interaction = LennardJonesForce::constrained_by(env);
 
         using vector_t = typename ParticleT::vector_type;
 
@@ -106,25 +106,27 @@ public:
         );
     }
 
-    template <class ParticleT>
+    template <class ParticleT, class InteractionT>
     void operator()(
             gpu_array<ParticleT> &particles,
+            InteractionT &interaction,
             double dt = 0.001,
             int n_blocks = 1024,
             int threads_per_block = 32) {
 
-        integration_step(particles, default_environment, dt, n_blocks, threads_per_block);
+        integration_step(particles, default_environment, interaction, dt, n_blocks, threads_per_block);
     }
 
-    template <class ParticleT, class EnvironmentT>
+    template <class ParticleT, class EnvironmentT, class InteractionT>
     void operator()(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
+            InteractionT &interaction,
             double dt = 0.001,
             int n_blocks = 1024,
             int threads_per_block = 32) {
 
-        integration_step(particles, env, dt, n_blocks, threads_per_block);
+        integration_step(particles, env, interaction, dt, n_blocks, threads_per_block);
     }
 };
 
