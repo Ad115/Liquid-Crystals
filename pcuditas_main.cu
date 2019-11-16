@@ -6,10 +6,11 @@
 #include "pcuditas/input_output/XYZformat.cu"
 #include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
+#include "pcuditas/environments/EmptySpace.cu"
 #include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/tools/Temperature.cu"
 
-int n_particles = 100;
+int n_particles = 60;
 double time_step = 0.003;
 
 int main() {
@@ -39,7 +40,7 @@ int main() {
 
         // Increase temperature
         thermostat.setpoint += 5e-5;
-        thermostat(particles);
+        //thermostat(particles);
 
         // Measure temperature
         std::cout << i 

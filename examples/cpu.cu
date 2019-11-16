@@ -8,7 +8,7 @@
 #include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/tools/Temperature.cu"
 
-int n_particles = 1000;
+int n_particles = 60;
 double time_step = 0.003;
 
 int main() {
@@ -16,7 +16,7 @@ int main() {
     auto particles = cpu_array<SimpleParticle>(n_particles);
 
     // Apply initial conditions
-    arrange_on_cubic_lattice(particles, 30.);
+    arrange_on_cubic_lattice(particles, 6.);
     set_random_velocities(particles);
 
     // Measure initial temperature
