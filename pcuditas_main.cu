@@ -6,7 +6,6 @@
 #include "pcuditas/input_output/XYZformat.cu"
 #include "pcuditas/integrators/VelocityVertlet.cu"
 #include "pcuditas/environments/PeriodicBoundaryBox.cu"
-#include "pcuditas/environments/EmptySpace.cu"
 #include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/tools/Temperature.cu"
 
