@@ -21,27 +21,37 @@ public:
 
     SimpleIntegrator() = default;
 
-    template <class ParticleT>
-    void operator()(
-            gpu_array<ParticleT> &particles,
-            double dt = 0.00001) {
-
-        this->update_forces(particles, default_environment);
-
-        this->move(particles, dt);
-    }
-
     template <class ParticleT, class EnvironmentT>
     void operator()(
             gpu_array<ParticleT> &particles, 
             gpu_object<EnvironmentT> &env,
             double dt = 0.001) {
-
-        this->update_forces(particles, env);
         
         this->move(particles, dt);
 
-        // Apply boundary conditions
+        this->apply_boundary_conditions(particles, env);
+    }
+
+    template <class ParticleT, class EnvironmentT, class InteractionT>
+    void operator()(
+            gpu_array<ParticleT> &particles, 
+            gpu_object<EnvironmentT> &env,
+            InteractionT &interaction,
+            double dt = 0.001) {
+
+        this->update_forces(particles, interaction);
+        
+        this->move(particles, dt);
+
+        this->apply_boundary_conditions(particles, env);
+    }
+
+
+    template <class ParticleT, class EnvironmentT>
+    void apply_boundary_conditions(
+                gpu_array<ParticleT> &particles, 
+                gpu_object<EnvironmentT> &env) {
+
         particles.for_each(
             [env_ptr=env.gpu_pointer()] 
             __device__ 
@@ -51,12 +61,24 @@ public:
         );
     }
 
-
-    template <class ParticleT, class EnvironmentT>
+    template <class ParticleT, class InteractionT>
     void update_forces(
                 gpu_array<ParticleT> &particles, 
-                gpu_object<EnvironmentT> &env) {
-        update_forces_shared2(particles, env);
+                InteractionT &interaction) {
+
+        using vector_t = typename ParticleT::vector_type;
+
+        auto update_force = 
+            [particles_gpu=particles.gpu_pointer()]
+            __device__
+            (ParticleT &p, vector_t &force, int idx) {
+                p.force = force;
+        };
+
+        
+        update_forces_shared2(
+            particles, interaction, vector_t::zero(), update_force
+        );
     }
 
     template <class ParticleT>

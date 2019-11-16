@@ -18,7 +18,7 @@ compile_for_benchmark:
 compile_examples:
 	nvcc examples/random_walk.cu ${COMPILE_FLAGS} -I. -o example_random_walk.out
 	nvcc examples/simplified.cu ${COMPILE_FLAGS} -I. -o example_simplified.out
-	#nvcc examples/no_interactions.cu ${COMPILE_FLAGS} -I. -o example_no_interactions.out
+	nvcc examples/no_interactions.cu ${COMPILE_FLAGS} -I. -o example_no_interactions.out
 
 clean:
 	rm *.out *.o *.xyz --verbose -f

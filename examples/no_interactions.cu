@@ -11,7 +11,7 @@
 
 
 int main() {
-    auto particles = gpu_array<SimpleParticle>{10};
+    auto particles = gpu_array<SimpleParticle>{100};
     arrange_on_cubic_lattice(particles, 100.);
     set_random_velocities(particles, 100.);
 
