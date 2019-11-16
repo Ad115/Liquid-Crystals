@@ -9,7 +9,7 @@
 #include "pcuditas/interactions/LennardJones.cu"
 #include "pcuditas/tools/Temperature.cu"
 
-int n_particles = 60;
+int n_particles = 100;
 double time_step = 0.003;
 
 int main() {

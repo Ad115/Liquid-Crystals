@@ -27,7 +27,7 @@ class gpu_array {
     public:
 
     size_t size;
-    using element_t = T;
+    using element_type = T;
     
     gpu_array(size_t n): size(n) {
         assert(size > 0);
@@ -255,8 +255,8 @@ TEST_SUITE("GPU Array specification") {
 
                 auto array = gpu_array<element_t>(size);
 
-                using array_element_t = decltype(array)::element_t;
-                CHECK(typeid(array_element_t) == typeid(element_t));
+                using array_element_type = decltype(array)::element_type;
+                CHECK(typeid(array_element_type) == typeid(element_t));
                 CHECK(array.size == size);
             }
         }

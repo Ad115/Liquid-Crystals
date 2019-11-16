@@ -10,7 +10,7 @@ public:
 
     template <class VectorT>
     __host__ __device__ 
-    VectorT apply_boundary_conditions(const VectorT& position) {
+    VectorT apply_boundary_conditions(const VectorT& position) const {
         VectorT new_pos(position);
         for (int d=0; d<position.dimensions;d++){
 
